@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!-- 岩迹 · 小红书配图（kami social-cards 模板改的）
+     1242 x 1660（3:4），每个 <section class="card"> 是一张图；导出：node shoot.mjs cards
+     底色用应用自己的纸色，强调色是应用橙色加深一档（在这个底色上对比度 6.25:1）；字体和应用一样用霞鹜文楷 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Kami">
+<title>岩迹：把每一次攀岩，记成一条线</title>
+<meta name="description" content="岩迹是一个室内攀岩记录应用：记录每条线、累计爬升登山、难度阶梯、点阵和按规则算出的复盘，记录只存在本机。">
+<meta name="keywords" content="岩迹, 攀岩, 室内攀岩, 记录, 小红书">
+<link rel="stylesheet" href="../fonts/lxgw-wenkai/lxgw-wenkai.css">
+<style>
+  @page { size: 1242px 1660px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper:  #F4F0E6;   /* 应用的纸色 */
+    --ink:    #1F1D19;
+    --accent: #9C3616;   /* 应用橙 #E2552B 加深，正文大小也够对比度 */
+    --muted:  #726C5F;
+    --line:   #D8D1C1;
+    --serif: "LXGW WenKai", "Kaiti SC", "STKaiti", serif;
+  }
+
+  body { font-family: var(--serif); color: var(--ink); background: #e7e1d3; }
+
+  /* 一张卡 = 一张图，正好 1242 x 1660。内容压到页脚就拆卡，不缩字 */
+  .card {
+    width: 1242px;
+    height: 1660px;
+    padding: 120px 96px 84px;
+    background: var(--paper);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+  }
+  .card:last-child { break-after: auto; }
+
+  .meta { font-size: 30px; line-height: 1.4; letter-spacing: 1.2px; color: var(--muted); }
+
+  /* 封面标题就是帖子标题，自己换行；要挪短尾行就收窄 max-width，不用 <br> */
+  h1 { max-width: 7.3em; margin-top: 72px; font-size: 104px; font-weight: 700; line-height: 1.28; letter-spacing: 1px; }
+  .poem { margin-top: 48px; font-size: 46px; line-height: 1.4; letter-spacing: 5.5px; color: var(--accent); }
+  .photo { position: absolute; left: 96px; right: 96px; top: 640px; bottom: 96px; border-radius: 20px; overflow: hidden; }
+  .photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
+
+  h2 { margin-top: 56px; font-size: 80px; font-weight: 700; line-height: 1.3; letter-spacing: 3px; }
+  .body { margin-top: 44px; font-size: 44px; line-height: 1.75; }
+  .body strong { font-weight: 700; color: var(--accent); }
+
+  .item { display: flex; margin-top: 48px; }
+  .item .n { flex: 0 0 120px; font-size: 64px; font-weight: 700; line-height: 1.1; color: var(--accent); }
+  .item p { flex: 1; font-size: 42px; line-height: 1.68; }
+
+  /* 截图占满正文下面剩下的高度，按原比例缩放、居中；截图底色和卡片同色，所以边缘看不出来 */
+  .shot { flex: 1 1 0; min-height: 0; margin: 56px 0 110px; display: flex; justify-content: center; align-items: flex-start; }
+  .shot img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; border-radius: 20px; }
+
+  .foot {
+    position: absolute; left: 96px; right: 96px; bottom: 84px;
+    padding-top: 30px; border-top: 1px solid var(--line);
+    font-size: 28px; line-height: 1.4; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<section class="card cover">
+  <div class="meta">岩迹 · 室内攀岩记录</div>
+  <h1 style="max-width:10em">岩迹：把每一次<span style="white-space:nowrap">攀岩，</span>记成一条线</h1>
+  <p class="poem">爬过的线，都会留下痕迹</p>
+  <div class="photo"><img src="shots/cover.png" alt="岩迹「今天」页：三条线按真实走向画在岩壁上，标出完攀和一次过"></div>
+</section>
+
+<section class="card">
+  <div class="meta">岩迹 · 02 / 07</div>
+  <h2>爬完一条，记一笔</h2>
+  <p class="body">选一条线，点下这次的结果：完攀、take 到顶，还是没到顶。新线可以用手指画出它的走向，以后每次都按这个形状显示。</p>
+  <div class="shot"><img src="shots/log.png" alt="记一次的面板：线名、走向小图、三个结果按钮和「记下这一次」"></div>
+  <div class="foot">岩迹：把每一次攀岩，记成一条线</div>
+</section>
+
+<section class="card">
+  <div class="meta">岩迹 · 03 / 07</div>
+  <h2>爬升攒起来，去登一座山</h2>
+  <p class="body" style="padding-right:96px">每次爬的米数都会累加。从天坛祈年殿、埃菲尔铁塔，一路爬到富士山和珠穆朗玛，爬够它的海拔就算登顶。</p>
+  <div class="shot"><img src="shots/mount.png" alt="「山」页：正在爬帝国大厦，213 / 443 m，小人爬到一半"></div>
+  <div class="foot">岩迹：把每一次攀岩，记成一条线</div>
+</section>
+
+<section class="card">
+  <div class="meta">岩迹 · 04 / 07</div>
+  <h2>哪一级，你真的站稳了</h2>
+  <p class="body">同一条线重复爬只算一条。完攀 1 条算解锁，3 条算站稳，5 条算吃透，你的级别按站稳的那一级来算。</p>
+  <div class="shot"><img src="shots/pyr.png" alt="「阶」页：站稳 10d，摸到过 11a，下面是按级别排的完攀金字塔"></div>
+  <div class="foot">岩迹：把每一次攀岩，记成一条线</div>
+</section>
+
+<section class="card">
+  <div class="meta">岩迹 · 05 / 07</div>
+  <h2>每一次去岩馆，都是一个点</h2>
+  <p class="body">一年里的每一天排成点阵，点越大那天爬升越多，登顶的日子是橙色。点一下，就回到那一天。</p>
+  <div class="shot"><img src="shots/heat.png" alt="「迹」页的点阵和选中那一天的卡片"></div>
+  <div class="foot">岩迹：把每一次攀岩，记成一条线</div>
+</section>
+
+<section class="card">
+  <div class="meta">岩迹 · 06 / 07</div>
+  <h2>从记录里，看出你卡在哪</h2>
+  <p class="body">正在磕的线、为什么 take 和掉、掉在哪一段、完攀率和节奏，都按固定规则算出来，样本太少的不显示。</p>
+  <div class="shot"><img src="shots/insight.png" alt="「看出来的」：正在磕的两条线和每次到的位置，下面是没力了、中段两个结论"></div>
+  <div class="foot">岩迹：把每一次攀岩，记成一条线</div>
+</section>
+
+<section class="card">
+  <div class="meta">岩迹 · 07 / 07</div>
+  <h2>记录只在你手里</h2>
+  <div class="item"><div class="n">01</div><p>不用注册，打开就能记。所有记录只存在这台手机的浏览器里，不会上传。</p></div>
+  <div class="item"><div class="n">02</div><p>换手机之前，可以存成文件，或者复制成一段文字备份；恢复也是这两种方式。</p></div>
+  <div class="item"><div class="n">03</div><p>想要更细的复盘，把这段时间的统计整理成一段话，补一句这个周期想要什么，复制给任何一个 AI 助手。</p></div>
+  <div class="item"><div class="n">04</div><p>发给 AI 的只有统计，没有逐条记录。</p></div>
+  <div class="foot">岩迹：把每一次攀岩，记成一条线</div>
+</section>
+
+</body>
+</html>
