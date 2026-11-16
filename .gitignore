@@ -1,2 +1,6 @@
 .DS_Store
 *.log
+
+# 本地并行副本与本地配置，不进公开仓库
+shengji-prototype_claude版本.html
+.claude/
