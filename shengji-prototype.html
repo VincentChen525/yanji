@@ -54,6 +54,7 @@ h2{font-family:var(--serif);font-size:17px;font-weight:600;margin:32px 0 4px}
 .mnum{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}.mnum b{font-size:20px;font-weight:500;color:var(--ink)}
 .summit{margin-top:12px;padding:14px;border:1px solid var(--accent);border-radius:16px;background:var(--card)}
 .summit b{display:block;font-family:var(--serif);font-size:22px;font-weight:600;margin-top:4px}.summit em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.summit.stopcard{border-color:var(--hair)}
 button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .stamp.paused svg{color:var(--muted)}.stamp.paused em{color:var(--ink)}
 .peak{display:flex;gap:16px;align-items:center;margin:8px 0 6px}.peak svg{width:130px;height:120px;flex:none;color:var(--ink)}
@@ -156,6 +157,7 @@ nav{position:absolute;left:0;right:0;bottom:0;display:flex;background:linear-gra
 nav button{flex:1;background:none;border:none;font-family:var(--serif);font-size:15px;color:var(--muted);padding:8px 0;cursor:pointer;position:relative}
 nav button.on{color:var(--ink);font-weight:600}
 nav button.on::after{content:"";position:absolute;left:50%;bottom:0;width:5px;height:5px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
+nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22px);width:5px;height:5px;border-radius:50%;background:var(--accent)}
 .fab{position:absolute;right:22px;bottom:calc(92px + env(safe-area-inset-bottom));height:52px;padding:0 22px;border-radius:26px;border:none;background:var(--ink);color:var(--paper);font-family:var(--serif);font-size:16px;cursor:pointer;box-shadow:0 8px 20px rgba(30,25,15,.25)}
 .veil{position:absolute;inset:0;background:rgba(30,27,20,.35);opacity:0;pointer-events:none;transition:opacity .25s}
 .sheet{position:absolute;left:0;right:0;bottom:0;max-height:94%;overflow-y:auto;background:var(--card);border-radius:26px 26px 0 0;padding:20px 24px calc(26px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s}
@@ -362,7 +364,13 @@ function demo(){
       if(p[1][0]==='s')c.result='send';else if(p[1][0]==='h'){c.result='hang';c.hangs=+p[1].slice(1)||1}
       else{c.result='fail';c.high=b?.5:parseFloat(p[1].slice(1))}
       if(p[2])c.why=W[p[2]];if(!b)c.mode=p[3]||'lead';climbs.push(c)})});
-  return{v:2,gym:DEMO_GYM,gyms:[{name:DEMO_GYM,wall:15},{name:'河边岩馆',wall:18},{name:'抱石工厂',wall:15}],routes,climbs}}
+  // 再补一段更早的重复攀爬，让示例走到山段：观景台、登顶册才有东西可看
+  const BACK=['黄色 2 号','绿色 5 号','白色 8 号','红色 3 号','橙色 6 号','紫色 4 号','黑色 9 号','灰色 2 号'];
+  routes.filter(r=>BACK.includes(r.name)).forEach((r,j)=>{for(let k=0;k<40;k++){const d=ago(200-k*2);
+    climbs.push({rid:r.id,date:d,t:(k*2)*1000+900+j,result:'send',hangs:0,high:1,demo:true});
+    if(d<r.since)r.since=d}});
+  return{v:2,gym:DEMO_GYM,gyms:[{name:DEMO_GYM,wall:15},{name:'河边岩馆',wall:18},{name:'抱石工厂',wall:15}],routes,climbs,
+    exp:{seenStops:{'桌山|363':1,'桌山|1067':1}}}}
 function migrate(old){ // 旧版本（按天存的记录）转成新结构，只保留自己记的
   const d={v:2,gym:'我的岩馆',gyms:[{name:'我的岩馆',wall:old.wall||15}],routes:[],climbs:[]};let n=0;
   old.sessions.forEach(s=>s.routes.forEach(r=>{if(r.demo)return;const id=uid(),b=r.type==='b';
@@ -566,6 +574,7 @@ function doWipe(){
   data.routes=data.routes.filter(r=>!ids.has(r.id));data.climbs=data.climbs.filter(c=>!ids.has(c.rid)&&!c.demo);data.routes=data.routes.filter(r=>climbsOf(r.id).length);
   data.gyms=data.gyms.filter(g=>data.routes.some(r=>r.gym===g.name));
   if(!data.gyms.some(g=>g.name===data.gym))data.gym=data.gyms.length?data.gyms[0].name:'';
+  data.exp={};   // 示例里的观景台/登顶记录一起清掉
   persist();viewDate=null;closeSheet();go('today')}
 
 /* ---------- 一条线：详情与回放 ---------- */
@@ -744,6 +753,72 @@ const artOf=n=>({d:ART[n],d2:ART2[n],w:AW[n]||100,ax:AX[n]==null?(AW[n]||100)/2:
 /*ART-END*/
 // 小人的两个姿势，爬的时候来回换
 const POSE=['M0 -6.5V0M0 -5L-4 -9.5M0 -5L4 -7M0 0L-3.5 5M0 0L3.5 2.5','M0 -6.5V0M0 -5L-4 -7M0 -5L4 -9.5M0 0L-3.5 2.5M0 0L3.5 5'];
+/* 观景台：每座山上真实存在的停留点（只给 14 座山；高度取整到米，文案只描述地点）。
+   每项：[海拔, 站名, 类型, 一句话]。数据来源与置信度见 docs/观景台-站点清单-v1.md。 */
+const STOPS={
+ '桌山':[[363,'缆车下站','出发地','缆车从这里出发。脚下是开普敦，头上是桌山的平顶。'],
+        [1067,'缆车上站','观景台','平顶就在眼前。云从桌面上翻下来。']],
+ '泰山':[[250,'红门','山门','一天从这里开始，石阶一路往上。'],
+        [847,'中天门','观景台','半山。索道在这里换乘，徒步的人开始慢下来。'],
+        [1460,'南天门','垭口','十八盘的尽头。回头看，泰安城是一层薄雾。']],
+ '黄山':[[450,'汤口','出发地','镇子在山脚下。从这里抬头，只看得到云。'],
+        [890,'云谷寺','山门','索道下站。再往上，松树就长在石头上了。'],
+        [1650,'玉屏楼','观景台','迎客松就在旁边。前面是莲花峰。']],
+ '华山':[[445,'玉泉院','山门','自古华山一条路，从这里进山。'],
+        [1125,'青柯坪','观景台','到这里才算真正进山。回身能看见来路绕成一条线。'],
+        [1614,'北峰','观景台','五峰里最矮的一座。华山从这里开始露出来。'],
+        [2087,'西峰','观景台','山脊像刀背。南峰就在前面。']],
+ '酋长岩':[[1220,'谷底','出发地','谷底的草甸。抬头是九百米的花岗岩。']],
+ '半穹顶':[[1228,'快乐岛','出发地','步道起点。瀑布的声音一路都在。'],
+          [1811,'内华达瀑布','观景台','瀑布顶。水在脚边落下去。'],
+          [2450,'Sub Dome','垭口','最后一段裸岩。再往上要抓着钢缆。']],
+ '峨眉山':[[600,'报国寺','山门','山门。香火和进山的人都在这里。'],
+          [1020,'万年寺','观景台','半山的寺庙。猴子比人熟路。'],
+          [2070,'洗象池','观景台','云开始在脚下。夜里能听见远处的钟。'],
+          [2430,'雷洞坪','营地','观光车的终点。再往上只能走。'],
+          [3079,'金顶','观景台','金顶。晴天能看到贡嘎。']],
+ '富士山':[[833,'河口湖','出发地','湖边的城镇。天晴时山整个倒在水里。'],
+          [2305,'五合目','山门','车道到这里结束。登山的人从这里出发。'],
+          [2700,'七合目','营地','山小屋一间挨着一间，灯一直亮到山顶。'],
+          [3100,'八合目','营地','过了这里，风就没有遮挡。'],
+          [3550,'九合目','营地','最后一段。山顶的木屋已经看得见。']],
+ '马特洪峰':[[1620,'策马特','出发地','没有汽车的小镇。每扇窗都朝着山。'],
+            [3260,'Hörnli 小屋','营地','常规路线从这里开始。绳子、岩钉，一样都不能少。'],
+            [4003,'Solvay 小屋','营地','瑞士最高的避难所。只在紧急时打开。']],
+ '勃朗峰':[[1035,'霞慕尼','出发地','登山者的镇子。缆车和冰镐在一条街上。'],
+          [2372,"Nid d'Aigle",'观景台','登山火车到这里。冰川在脚下。'],
+          [3167,'Tête Rousse','营地','第一晚住这里。夜里能听见石头落下来。'],
+          [3835,'Goûter 小屋','营地','冲顶前的最后一晚，凌晨两点出发。'],
+          [4362,'Vallot 紧急小屋','营地','高处的铁皮屋，只用来躲风。']],
+ '玉龙雪山':[[2400,'丽江','出发地','古城在坝子里，雪山在北边。'],
+            [3100,'甘海子','山门','草甸尽头是索道，云杉一直长到坡上。'],
+            [4506,'冰川公园','观景台','索道上站。冰川就在脚下，白得发蓝。'],
+            [4680,'4,680 观景台','观景台','栈道尽头。这是不登山的人能到的最高的地方。']],
+ '乞力马扎罗':[[1800,'马查梅门','山门','雨林里的山门。背包和向导都在这里集合。'],
+              [2835,'马查梅营地','营地','第一晚。雨林在身后退下去。'],
+              [3845,'希拉营地','营地','高原。晚上能看到整条银河。'],
+              [4640,'巴拉夫营地','营地','冲顶前的最后营地。风把帐篷吹得整夜响。']],
+ '乔戈里峰':[[2230,'斯卡尔杜','出发地','巴尔蒂斯坦的小城。从这里开始是土路。'],
+            [3000,'阿斯科莱','山门','路的尽头。之后只能走。'],
+            [4100,'乌尔杜卡斯','营地','冰川上的营地。脚下全是会动的石头。'],
+            [4600,'孔科迪亚','观景台','两条冰川在这里交汇，K2 就在正前方。'],
+            [5150,'大本营','大本营','大本营。从这里往上，每一步都要还。'],
+            [5900,'一号营地','营地','冰塔之间的一块平地。'],
+            [6350,'二号营地','营地','房子的高度，云的高度。'],
+            [8000,'四号营地','营地','八千米。呼吸要算着用。']],
+ '珠穆朗玛':[[2860,'卢卡拉','出发地','跑道尽头就是悬崖。飞机比山更吓人。'],
+            [3440,'南崎巴扎','小镇','夏尔巴人的集市。再往上，树就少了。'],
+            [3860,'天波切','观景台','寺院和经幡。珠峰第一次露出来。'],
+            [4410,'丁伯切','营地','树没有了。风整夜从山谷里过。'],
+            [4940,'罗布切','营地','沿昆布冰川往上，纪念塔越来越多。'],
+            [5364,'珠峰大本营','大本营','昆布冰川的脚下。从这里开始才算进山。'],
+            [6065,'一号营地','营地','冰川裂缝区。夜里能听见冰在动。'],
+            [6400,'二号营地','营地','西谷。帐篷外面就是洛子峰。'],
+            [7168,'三号营地','营地','洛子壁下。往上是一段几乎垂直的冰。'],
+            [7950,'四号营地','营地','南坳。所有的灯都熄了，只剩头灯。'],
+            [8790,'希拉里台阶','垭口','最后一段岩壁。过去就是顶。']]
+};
+const stopsOf=n=>STOPS[n]||[];
 /* 远征：一座一座爬，每座从山脚（0 米）爬到它的海拔。
    规则：把所有攀爬按时间排好，米数一条条加到"正在爬"的那座上。
    · 跨过山顶的那条线会被切开，多出来的米数算给下一座；
@@ -751,21 +826,34 @@ const POSE=['M0 -6.5V0M0 -5L-4 -9.5M0 -5L4 -7M0 0L-3.5 5M0 0L3.5 2.5','M0 -6.5V0
    · 自己选过的山中途再换，以换的那一刻为界：之前的留在原来那座（暂停），之后的算新的；
    · 存的只有选择：exp.first 第一座，exp.after[k] 第 k 次登顶之后接哪座，exp.sw 中途换山的时刻。 */
 const HT=Object.fromEntries(LANDMARKS.map(l=>[l.n,l.m]));
-const expData=()=>{const e=data.exp||(data.exp={});e.after=e.after||{};e.sw=e.sw||[];return e};
-function expedition(){const X=expData(),att={},summits=[],cnt={};
+const expData=()=>{const e=data.exp||(data.exp={});e.after=e.after||{};e.sw=e.sw||[];e.stops=e.stops||{};e.seenStops=e.seenStops||{};return e};
+function expedition(){const X=expData(),att={},summits=[],cnt={},lastAt={};
   const A=n=>att[n]||(att[n]={m:0,start:null,days:new Map()});
   const dflt=()=>{const never=LANDMARKS.filter(l=>!cnt[l.n]);if(never.length)return never[0].n;
     return[...LANDMARKS].sort((a,b)=>cnt[a.n]-cnt[b.n]||a.m-b.m)[0].n};
-  let act=X.first&&HT[X.first]?X.first:dflt(),explicit=!!(X.first&&HT[X.first]),origin={kind:'start'};
+  let act=X.first&&HT[X.first]?X.first:dflt(),explicit=!!(X.first&&HT[X.first]),origin={kind:'start'},dirty=false;
   const ev=[...data.climbs.map(c=>({d:c.date,t:c.t,c})),...X.sw.filter(w=>HT[w.n]).map(w=>({d:w.d,t:w.t,w}))].sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:a.t-b.t||(a.w?-1:1));
   ev.forEach(e=>{
     if(e.w){if(e.w.n!==act){act=e.w.n;explicit=true;origin={kind:'switch'}}return}
     let x=R(e.c.rid).wall*(e.c.result==='fail'?e.c.high:1);
     while(x>0){const a=A(act),room=HT[act]-a.m,put=Math.min(x,room);
-      if(put>0){if(!a.start)a.start=e.d;a.m+=put;a.days.set(e.d,a.m);x-=put}
-      if(a.m>=HT[act]-1e-9){const k=summits.length;summits.push({n:act,k,start:a.start,date:e.d,visits:a.days.size});cnt[act]=(cnt[act]||0)+1;delete att[act];
+      if(put>0){
+        if(!a.start)a.start=e.d;
+        if(!lastAt[act])lastAt[act]={t:e.c.t-1,date:e.d};
+        const fromM=a.m,toM=a.m+put,last=lastAt[act];
+        // 观景台：这一段米数跨过的站点。第一次到达的日期永久记下来（收藏不回收，换山也不收走）
+        stopsOf(act).forEach(st=>{if(st[0]>fromM&&st[0]<=toM){const key=act+'|'+st[0];
+          if(!X.stops[key]){X.stops[key]={d:e.d,t:e.c.t,fromT:last.t};dirty=true}
+          lastAt[act]={t:e.c.t,date:e.d}}});
+        a.m+=put;a.days.set(e.d,a.m);x-=put}
+      if(a.m>=HT[act]-1e-9){const k=summits.length;summits.push({n:act,k,start:a.start,date:e.d,visits:a.days.size});cnt[act]=(cnt[act]||0)+1;delete att[act];delete lastAt[act];
         const pick=X.after[k];if(pick&&HT[pick]){act=pick;explicit=true}else{act=dflt();explicit=false}origin={kind:'summit',k}}}});
-  const a=A(act);return{total:meters(data.climbs),act,cur:a.m,start:a.start,days:a.days,explicit,origin,summits,att,cnt,dflt:dflt()}}
+  if(dirty)persist();
+  const a=A(act);
+  // 还没看过的新观景台，最近的排前面
+  const unseen=Object.keys(X.stops).filter(k=>!X.seenStops[k]).map(k=>{const i=k.lastIndexOf('|'),n=k.slice(0,i),m=+k.slice(i+1),st=stopsOf(n).find(x=>x[0]===m);
+    return st?{n,m,key:k,s:st,st:X.stops[k]}:null}).filter(Boolean).sort((x,y)=>y.st.t-x.st.t);
+  return{total:meters(data.climbs),act,cur:a.m,start:a.start,days:a.days,explicit,origin,summits,att,cnt,dflt:dflt(),unseen}}
 // 选一座山来爬：现在这座是默认占位的 → 改写"接哪座"，米数跟着挪；是自己选的 → 记一次中途换山
 function pickPeak(n){const E=expedition(),X=expData();if(n===E.act||!HT[n])return;
   if(!E.explicit){if(E.origin.kind==='summit')X.after[E.origin.k]=n;else X.first=n}
@@ -775,7 +863,7 @@ const artSvg=(n,full)=>{const w=AW[n]||100,a='fill="none" stroke="currentColor" 
   // 小图标里太宽的山再横向压一点，不然只剩一条线
   const kx=full?1:Math.min(1,210/w),g=kx<1?` transform="scale(${kx.toFixed(3)} 1)"`:'';
   return`<svg viewBox="-3 -8 ${(w*kx+6).toFixed(0)} 111" preserveAspectRatio="xMidYMax meet"><g${g}>${full?`<path d="${ART2[n]}" ${a} stroke-width=".7" opacity=".75"/>`:''}<path d="${ART[n]}" ${a} stroke-width="${full?1.3:1.1}"/></g></svg>`};
-let mountTok=0,mountTotal=0,bookSel=null,mountView=null;
+let mountTok=0,mountTotal=0,bookSel=null,mountView=null,curStopKey=null,mountNew=false;
 function renderMount(part){
   const E=expedition(),X=expData(),V=mountView&&HT[mountView]?mountView:E.act,isAct=V===E.act,T={n:V,m:HT[V]},total=E.total;mountTotal=isAct?total:0;
   // 拨到别的山时只是看看：登顶过的整座描深并插一面旗，暂停的停在原来的高度
@@ -796,34 +884,64 @@ function renderMount(part){
   d+=(d?'L':'M')+rx(cur).toFixed(1)+' '+y(cur).toFixed(1);
   s+=`<path id="mRope" d="${d}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
   days.forEach(m=>{if(m>0&&cur)s+=`<circle class="md" data-f="${(m/cur).toFixed(4)}" cx="${rx(m).toFixed(1)}" cy="${y(m).toFixed(1)}" r="2.6" fill="var(--card)" stroke="var(--ink)" stroke-width="1.1"/>`});
+  // 观景台：到过的实心 + 地名；下一站空心 + 虚线；更远的只有淡刻度
+  const sts=stopsOf(V),stSeen=st=>!!X.stops[V+'|'+st[0]],nextIdx=sts.findIndex(st=>!stSeen(st)&&(whole||st[0]>cur));
+  if(isAct&&nextIdx>=0){const ns=sts[nextIdx];s+=`<path d="M${rx(cur).toFixed(1)} ${y(cur).toFixed(1)}L${rx(ns[0]).toFixed(1)} ${y(ns[0]).toFixed(1)}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="1 3"/>`}
+  const marked=[];
+  sts.forEach((st,i)=>{const done=stSeen(st)||whole,isNext=i===nextIdx,xx=rx(st[0]),yy=y(st[0]);
+    if(!done&&!isNext&&!whole){s+=`<circle cx="${xx.toFixed(1)}" cy="${yy.toFixed(1)}" r="1.2" fill="var(--hair)"/>`;return}
+    s+=done?`<circle cx="${xx.toFixed(1)}" cy="${yy.toFixed(1)}" r="2.2" fill="var(--ink)"/>`:`<circle cx="${xx.toFixed(1)}" cy="${yy.toFixed(1)}" r="2.6" fill="var(--card)" stroke="var(--ink)" stroke-width="1"/>`;
+    marked.push({st,done,isNext,xx,yy})});
+  // 站名按高度排，避开小人、互相不重叠；被挪开的画一根细引线
+  const manY=(isAct||cur>0)?y(cur):null;let prevLy=-1e9;
+  marked.sort((a,b)=>a.yy-b.yy).forEach(m=>{let ly=m.yy+3.4;
+    if(manY!=null&&Math.abs(ly-manY)<12)ly=manY-16;
+    if(ly<prevLy+11)ly=prevLy+11;prevLy=ly;
+    const right=m.xx<W/2,lx=right?m.xx+7:m.xx-7;
+    if(Math.abs(ly-(m.yy+3.4))>0.5)s+=`<path d="M${m.xx.toFixed(1)} ${(m.yy+(right?2:-2)).toFixed(1)}L${lx.toFixed(1)} ${(ly-3).toFixed(1)}" stroke="var(--hair)" stroke-width=".7"/>`;
+    s+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="10" text-anchor="${right?'start':'end'}" fill="${m.done?'var(--ink)':'var(--muted)'}">${esc(m.st[1])}${m.isNext?` · ${fmt(m.st[0])} m`:''}</text>`});
   if(whole)s+=`<path d="M${PX} ${yG-hh}v-13l9 3.2l-9 3.2" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>`;
   if(isAct||cur>0)s+=`<g id="mMan" transform="translate(${rx(cur).toFixed(1)} ${(y(cur)-7).toFixed(1)})"><g transform="scale(1.5)"><circle cy="-9.2" r="2.4" fill="var(--ink)"/><path id="mPose" d="${POSE[0]}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
     <text x="${lblR?16:-16}" y="-2" font-size="11" text-anchor="${lblR?'start':'end'}" fill="var(--ink)">${isAct?'你在这里':'停在这里'}</text></g>`;
   s+='</svg>';
   const nTop=E.summits.length,left=T.m-cur,idx=LANDMARKS.findIndex(l=>l.n===V),last=E.summits[nTop-1],fresh=last&&nTop>(X.seen||0);
+  const un=E.unseen[0]&&E.unseen[0].n===V?E.unseen[0]:null;   // 卡片只在这座山上显示，别的山只留角标
+  curStopKey=un?un.key:null;mountNew=!!fresh||E.unseen.length>0;
+  let stopSeg=null;
+  if(un){const cs=data.climbs.filter(c=>c.t>un.st.fromT&&c.t<=un.st.t),ds=new Set(cs.map(c=>c.date)),gyms=new Set(cs.map(c=>R(c.rid).gym));
+    const byRid={};cs.forEach(c=>{byRid[c.rid]=(byRid[c.rid]||0)+1});
+    const topId=Object.keys(byRid).sort((a,b)=>byRid[b]-byRid[a])[0];
+    const sent=cs.filter(c=>c.result==='send').map(c=>R(c.rid));
+    const bl=sent.filter(r=>r.type==='l').sort((a,b)=>gi(b)-gi(a))[0],bb=sent.filter(r=>r.type==='b').sort((a,b)=>gi(b)-gi(a))[0];
+    stopSeg={n:cs.length,d:ds.size,m:Math.round(meters(cs)),gyms:gyms.size,best:bl?bl.grade:bb?bb.grade:null,name:topId?R(topId).name:null,cnt:topId?byRid[topId]:0}}
   const recent=[...new Set(E.summits.map(x=>x.n).reverse())].slice(0,4);
   const cardH=`<div class="card" id="mCard" style="padding:16px 12px 8px;margin-top:0">
      <div class="row" style="align-items:flex-end;padding:0 4px"><div><div class="eyebrow"${isAct?'':' style="color:var(--ink)"'}>${isAct?`正在爬 · 第 ${nTop+1} 座`:cur>0?'暂停中':doneN?`登顶过${doneN>1?' '+doneN+' 次':''} · ${lab(lastS.date)}`:'还没爬过'}</div><div class="mname">${T.n}</div></div>
        <div class="mnum">${isAct||cur>0?`<b>${fmt(cur)}</b> / `:''}${isAct||cur>0?fmt(T.m):`<b>${fmt(T.m)}</b>`} m</div></div>${s}</div>`;
   // 滚轮下面固定高度的一行：正在爬的那座显示离顶多远，别的山显示"就爬它"
-  const actH=isAct?`<div class="sub">离${T.n}的顶还有 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b>。每座山都从山脚爬起，爬够它的海拔就算登顶。同一条线爬几遍就算几遍，抱石每次按 ${BWALL} 米算。</div>`
+  const nextS=sts.find(st=>st[0]>cur&&!stSeen(st));
+  const actH=isAct?`<div class="sub">${nextS?`下一站「${esc(nextS[1])}」还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(nextS[0]-cur)} m</b>，`:''}离${T.n}的顶还有 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b>。每座山都从山脚爬起，爬够它的海拔就算登顶。同一条线爬几遍就算几遍，抱石每次按 ${BWALL} 米算。</div>`
     :`<button class="save" id="mGo">${cur>0?'接着爬它':doneN?'再爬一次':'就爬它'}</button>
       <div class="sub">${E.explicit?`现在的${E.act}会停在 ${fmt(E.cur)} m，以后可以接着爬。`:E.cur>0?`现在的${E.act}是默认接上的，已经爬的 ${fmt(E.cur)} m 会算到${V}上。`:`现在的${E.act}还没开始爬，直接换成它。`}</div>`;
-  if(part&&$('mDeck')){$('mDeck').innerHTML=cardH;$('mAct').innerHTML=actH;$('mBig').textContent=fmt(total);return}
+  if(part&&$('mDeck')){$('mDeck').innerHTML=cardH;$('mAct').innerHTML=actH;$('mBig').textContent=fmt(total);syncBadge();return}
   const item=l=>{const c=E.cnt[l.n]||0,now=l.n===E.act,p=E.att[l.n],paused=!now&&p&&p.m>0;
     return`<button data-w="${l.n}" aria-label="${l.n}">${artSvg(l.n)}<i class="${now?'now':paused?'paused':c?'done':''}"></i></button>`};
   $('p-mount').innerHTML=`
    <div class="eyebrow">累计爬升 · 从第一条线算起</div>
    <div class="big" style="margin-top:8px"><span id="mBig">${fmt(total)}</span><small>m</small></div>
    <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天，${data.climbs.length} 次攀爬${nTop?`，登顶 ${nTop} 次`:''}。`:'记下第一条线，就从山脚出发。'}</div>
-   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:''}
+   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
+     <div class="sub" style="margin-top:8px">${esc(un.s[3])}</div>
+     <div class="sub" style="margin-top:10px;color:var(--ink)">这段路：${stopSeg.d} 天 · ${stopSeg.n} 次攀爬 · ${fmt(stopSeg.m)} 米${stopSeg.gyms>1?` · 去了 ${stopSeg.gyms} 家岩馆`:''}${stopSeg.best?` · 最高完攀 ${stopSeg.best}`:''}</div>
+     ${stopSeg.name?`<div class="sub" style="margin-top:4px">爬得最多的是「${esc(stopSeg.name)}」，${stopSeg.cnt} 次。</div>`:''}</div>`:''}
    <div id="mDeck" style="margin-top:12px">${cardH}</div>
    <div class="row" style="margin-top:24px"><div class="eyebrow">滑动选一座山</div><button class="link" id="mBook">全部</button></div>
    <div class="wheelbox"><div class="wheel" id="wheel">${LANDMARKS.map(item).join('')}</div><b class="wptr"></b></div>
    <div class="legend" style="justify-content:center;margin-top:2px"><span><i class="wd now"></i>正在爬</span><span><i class="wd done"></i>登顶过</span><span><i class="wd paused"></i>暂停</span></div>
    <div id="mAct">${actH}</div>`;
-  bindWheel()}
+  bindWheel();syncBadge()}
 // 横向滚轮：图标带可以甩着滑，停下时吸附到中间的槽；槽里的那座是墨色，两边渐小渐浅
+function syncBadge(){const b=document.querySelector('nav button[data-p="mount"]');if(b)b.classList.toggle('new',mountNew)}
 function wheelPaint(){const w=$('wheel');if(!w)return null;const mid=w.scrollLeft+w.clientWidth/2;let best=null,bd=1e9;
   [...w.children].forEach(b=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-mid),k=Math.max(0,1-d/(b.offsetWidth*2.6));
     b.style.setProperty('--k',k.toFixed(3));if(d<bd){bd=d;best=b}});
@@ -845,9 +963,12 @@ function peakHtml(){const n=bookSel,E=expedition(),h=HT[n],now=n===E.act,p=E.att
   const rows=done.map((x,i)=>`<div class="rrow plain"><span><b>${done.length>1?`第 ${i+1} 次登顶`:'登顶'} · ${lab(x.date)}</b><em>${lab(x.start)} 出发 · 去了 ${x.visits} 次</em></span></div>`).join('');
   const cur=now||paused?`<div class="rrow plain"><span><b>${now?'正在爬':'暂停中'} · ${fmt(p?p.m:0)} / ${fmt(h)} m</b><em>${p&&p.start?`${lab(p.start)} 出发 · 去了 ${p.days.size} 次`:'还没开始爬'}</em></span></div>`:'';
   const note=E.explicit?`现在的${E.act}会停在 ${fmt(E.cur)} m，以后可以接着爬。`:E.cur>0?`现在的${E.act}是默认接上的，已经爬的 ${fmt(E.cur)} m 会算到${n}上。`:'';
+  const X2=expData(),sts2=stopsOf(n),summited=(E.cnt[n]||0)>0,gotN=sts2.filter(st=>X2.stops[n+'|'+st[0]]||summited).length;
+  const stopsHtml=sts2.length?`<div class="lbl">路上 · ${gotN}/${sts2.length} 个观景台</div>${sts2.map(st=>{const got=X2.stops[n+'|'+st[0]],ok=got||summited;
+    return `<div class="rrow plain"><span><b>${ok?'● ':'○ '}${esc(st[1])}</b><em>${fmt(st[0])} m · ${esc(st[2])}${got?' · '+lab(got.d)+' 到':''}</em></span></div>`}).join('')}`:'';
   return`<div class="row"><button class="link" id="toBook">‹ 登顶册</button><button class="link" id="close">完成</button></div>
     <div class="peak">${artSvg(n,true)}<div><div class="mname">${n}</div><div class="mnum" style="margin-top:4px">${LANDMARKS.find(l=>l.n===n).c}</div><div class="mnum" style="margin-top:4px">${LANDMARKS.find(l=>l.n===n).t==='b'?'高':'海拔'} <b>${fmt(h)}</b> m</div></div></div>
-    ${rows}${cur}${!rows&&!cur?'<div class="sub" style="margin-top:6px">还没爬过。</div>':''}
+    ${rows}${cur}${stopsHtml}${!rows&&!cur?'<div class="sub" style="margin-top:6px">还没爬过。</div>':''}
     <div class="sub" style="margin-top:12px;padding:12px;border:1px dashed var(--hair);border-radius:12px">真实照片和路书，之后会放在这里。</div>
     ${now?'':`<button class="save" id="peakGo">${paused?'接着爬它':done.length?'再爬一次':'就爬它'}</button>
       <div class="sub" style="margin-top:8px">${h>=3000?`要爬够 ${fmt(h)} 米才登顶，会是很长的一段。`:''}${note}</div>`}`}
@@ -864,6 +985,7 @@ function mountAnim(){const tok=++mountTok,rope=$('mRope'),man=$('mMan'),big=$('m
   frame(t0);requestAnimationFrame(frame)}
 $('p-mount').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id==='mOk'){expData().seen=expedition().summits.length;persist();renderMount()}
+  else if(b.id==='mStopOk'){const X=expData();if(curStopKey){X.seenStops[curStopKey]=1;persist()}renderMount()}
   else if(b.id==='mBook')openSheet('book')
   else if(b.id==='mGo'){pickPeak(mountView);mountView=null;renderMount();mountAnim()}
   else if(b.dataset.w)wheelTo(b.dataset.w,true)};
