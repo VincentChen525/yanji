@@ -514,7 +514,7 @@ function renderToday(){
      <div><b>${bestTxt}</b><span>最高完攀</span></div>
      <div><b>${cs.length}</b><span>次攀爬</span></div>
    </div>
-   ${A.length?`<div style="margin-top:8px">${A.map(o=>`<button class="rrow" data-rid="${o.id}"><span><b>${tape(o.name)}${esc(o.name)}</b><em>${meta(o)}</em></span><span class="gl">${o.cs.map(glyph).join('')}</span></button>`).join('')}</div>
+   ${A.length?`<div style="margin-top:8px">${A.map(o=>`<button class="rrow" data-rid="${o.id}" data-mode="${o.type==='b'?'':MODEG(o.mode)}"><span><b>${tape(o.name)}${esc(o.name)}</b><em>${meta(o)}</em></span><span class="gl">${o.cs.map(glyph).join('')}</span></button>`).join('')}</div>
      <div class="row" style="margin-top:12px"><div class="sub">点一条线，看它的每一次和回放。</div>${isToday&&cs.length?'<button class="link" id="undo">撤销上一次</button>':''}</div>`:''}
    ${isToday&&hasDemo()?'<div class="demo"><span>现在看到的是示例数据</span><button class="link" id="wipe">清空，开始记自己的</button></div>':''}
 `;
@@ -559,7 +559,7 @@ $('p-today').onclick=e=>{const b=e.target.closest('button'),hit=e.target.closest
   else if(b&&b.id==='back'){viewDate=null;const t=dayFrom;dayFrom='today';go(t)}
   else if(b&&b.id==='openSet')openSheet('set');
   else if(b&&b.id==='wipe')wipeDemo();
-  else if(hit)openRoute(hit.dataset.rid)};
+  else if(hit)openRoute(hit.dataset.rid,hit.dataset.mode||null)};
 function wipeDemo(){ask({title:'清空示例数据',body:'示例的线和记录会全部删掉，你自己记的会保留。',lock:true,yes:'清空',onYes:doWipe})}
 function doWipe(){
   const ids=new Set(data.routes.filter(r=>r.demo).map(r=>r.id));
@@ -569,9 +569,11 @@ function doWipe(){
   persist();viewDate=null;closeSheet();go('today')}
 
 /* ---------- 一条线：详情与回放 ---------- */
-let curRid=null,backTo='today',playTok=0;
+let curRid=null,backTo='today',playTok=0,routeSel=null;
 const RG={W:340,H:300,x:120,yG:268,HH:230};
-function routeSvg(r){const cs=climbsOf(r.id),{W,H,x,yG,HH}=RG;
+// 详情页可以按方式筛：全部 / 先锋 / 上方保护（自保并入上方保护；每条记录仍标出实际方式）
+function routeClimbs(r){const all=climbsOf(r.id);return routeSel&&r.type!=='b'?all.filter(c=>MODEG(cMode(c,r))===routeSel):all}
+function routeSvg(r,cs){cs=cs||climbsOf(r.id);const {W,H,x,yG,HH}=RG;
   const TN=tnuts();let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">${TN.defs}<rect x="4" y="${yG-HH-18}" width="${W-8}" height="${HH+18}" fill="url(#${TN.id})"/>`;
   s+=`<line x1="4" x2="${W-4}" y1="${yG}" y2="${yG}" stroke="var(--ink)" stroke-width="1.2"/>`;
   if(r.type==='b'){const best=cs.reduce((a,c)=>rank(c)>rank(a)?c:a,cs[0]);
@@ -586,17 +588,26 @@ function routeSvg(r){const cs=climbsOf(r.id),{W,H,x,yG,HH}=RG;
     s+=topDot(G.xa(1),G.Y(1),6,fg?'first':sent?'send':'hang')}
   return s+`</g><circle id="rdot" r="6" fill="var(--ink)" style="display:none"/></svg>`}
 function renderRoute(){const r=R(curRid);if(!r){go('today');return}
-  const cs=climbsOf(r.id),lead=r.type!=='b',sent=cs.some(c=>c.result==='send');
-  const status=r.retired?'已撤线':sent?'已完攀':'还在磕',twin=twinOf(r);
+  const all=climbsOf(r.id),rope=r.type!=='b';
+  const groups=rope?[...new Set(all.map(c=>MODEG(cMode(c,r))))]:[];
+  if(!rope||groups.length<2)routeSel=null;else if(routeSel&&!groups.includes(routeSel))routeSel=null;
+  const cs=routeClimbs(r),sent=cs.some(c=>c.result==='send'),twin=twinOf(r);
+  const status=r.retired?'已撤线':sent?'已完攀':'还在磕';
+  const cnt=g=>all.filter(c=>MODEG(cMode(c,r))===g).length;
+  const sub=rope
+    ?`${r.grade} · ${r.wall}m · 爬了 ${all.length} 次${groups.length>1?`（${groups.map(g=>GNAME[g]+' '+cnt(g)+' 次').join(' · ')}）`:' · '+GNAME[groups[0]]} · ${status}`
+    :`${meta(r)} · 爬了 ${all.length} 次 · ${status}`;
+  const chips=rope&&groups.length>1?`<div style="margin-top:10px"><div class="pseg">${[['','全部 '+all.length]].concat(groups.map(g=>[g,GNAME[g]+' '+cnt(g)])).map(([k,t])=>`<button data-rs="${k}" class="${(routeSel||'')===k?'on':''}">${t}</button>`).join('')}</div></div>`:'';
   $('p-route').innerHTML=`
    <div class="row"><button class="link" id="rback">‹ 返回</button><button class="link" id="rename">改名</button></div>
    <div class="eyebrow" style="margin-top:14px">${esc(r.gym)} · ${lab(r.since)} 开始爬</div>
    <h1>${tape(r.name,true)}${esc(r.name)}</h1>
-   <div class="sub">${meta(r)} · 爬了 ${cs.length} 次 · ${status}</div>
-   <div class="card">${routeSvg(r)}<div class="cap" id="rcap">${lead&&cs.length>1?'':'&nbsp;'}</div></div>
-   <div class="two">${lead?'<button class="ghostbtn" id="replay">▶ 回放</button>':'<span></span>'}<button class="save" id="again"${r.retired?' disabled style="opacity:.4"':''}>再记一次</button></div>
+   <div class="sub">${sub}</div>
+   ${chips}
+   <div class="card">${routeSvg(r,cs)}<div class="cap" id="rcap">${rope&&cs.length>1?'':'&nbsp;'}</div></div>
+   <div class="two"${rope&&cs.length>1?'':' style="grid-template-columns:1fr"'}>${rope&&cs.length>1?'<button class="ghostbtn" id="replay">▶ 回放</button>':''}<button class="save" id="again"${r.retired?' disabled style="opacity:.4"':''}>再记一次</button></div>
    <h2>每一次</h2>
-   <div>${[...cs].reverse().map((c,i)=>`<div class="rrow plain"><span><b>${desc(c,r)}${c.why?' · '+REASON[c.why]:''}</b><em>第 ${cs.length-i} 次 · ${lab(c.date)}</em></span><span class="gl">${glyph(c)}</span></div>`).join('')}</div>
+   <div>${[...cs].reverse().map(c=>{const i=all.indexOf(c);return `<div class="rrow plain"><span><b>${desc(c,r)}${c.why?' · '+REASON[c.why]:''}</b><em>第 ${i+1} 次 · ${lab(c.date)}${rope?' · '+MODE[cMode(c,r)]:''}</em></span><span class="gl">${glyph(c)}</span></div>`}).join('')}</div>
    <div style="margin-top:16px;text-align:center"><button class="link" id="retire">${r.retired?'这条线还在，恢复它':'这条线撤了'}</button></div>
    ${twin?`<div style="margin-top:12px;text-align:center"><button class="link" id="merge">和另一条同名的线合并（${lab(twin.since)} 开始爬，${climbsOf(twin.id).length} 次）</button></div>`:''}
    <div style="margin-top:12px;text-align:center"><button class="link" id="del">删除这条线</button></div>`}
@@ -615,9 +626,10 @@ function mergeRoutes(a,b){const first=x=>{const c=climbsOf(x.id)[0];return c?c.t
   data.climbs.forEach(c=>{if(c.rid===gone.id)c.rid=keep.id});
   keep.retired=false;if(!keep.shape&&gone.shape)keep.shape=gone.shape;if(gone.since<keep.since)keep.since=gone.since;if(!gone.demo)delete keep.demo;
   data.routes=data.routes.filter(x=>x.id!==gone.id);curRid=keep.id;persist()}
-function openRoute(rid){curRid=rid;if(page!=='route')backTo=page;go('route')}
+function openRoute(rid,group){curRid=rid;routeSel=group||null;if(page!=='route')backTo=page;go('route')}
 $('p-route').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=R(curRid);
   if(b.id==='rback')go(backTo);
+  else if(b.dataset.rs!==undefined){routeSel=b.dataset.rs||null;renderRoute()}
   else if(b.id==='rename')renameAsk(r,false);
   else if(b.id==='merge'){const t=twinOf(r);if(t)ask({title:'合并同名的线',body:`把这两条「${esc(r.name)} · ${meta(r)}」合成一条，两边的攀爬记录按时间排在一起。合并后不能拆开。`,lock:true,yes:'合并',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()}})}
   else if(b.id==='del')ask({title:'删除这条线',body:`「${esc(r.name)}」和它的 ${climbsOf(r.id).length} 次攀爬记录会一起删掉，不能恢复。`,lock:true,yes:'删除',onYes:()=>{data.climbs=data.climbs.filter(c=>c.rid!==r.id);data.routes=data.routes.filter(x=>x.id!==r.id);persist();closeSheet();go(backTo)}})
@@ -625,11 +637,13 @@ $('p-route').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r
     if(t&&!t.retired)ask({title:'有一条同名的线正在爬',body:`「${esc(t.name)} · ${meta(t)}」现在有一条在爬（${lab(t.since)} 开始爬，${climbsOf(t.id).length} 次）。两条一模一样的线没法区分，所以恢复之前要选一个：<br><br>它们其实是同一条，就合并成一条。是两条不同的线，就给这条改个名。`,
       yes:'合并成一条',no:'改个名再恢复',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()},onNo:()=>renameAsk(r,true)});
     else{r.retired=!r.retired;persist();renderRoute()}}
-  else if(b.id==='again'){if(r.retired)return;data.gym=r.gym;startForm(r.id);openSheet('form')}
-  else if(b.id==='replay')replay(r.id)};
+  else if(b.id==='again'){if(r.retired)return;data.gym=r.gym;startForm(r.id);
+    if(r.type!=='b'&&routeSel){const cl=routeClimbs(r);draft.mode=cl.length?cMode(cl[cl.length-1],r):(routeSel==='up'?'tr':'lead')}
+    openSheet('form')}
+  else if(b.id==='replay')replay(r.id,routeClimbs(r))};
 // 回放：按时间顺序，把每一次攀爬在同一条线上重演一遍
-async function replay(rid){
-  const tok=++playTok,r=R(rid),cs=climbsOf(rid),{x,yG,HH}=RG,G=geom(r,x,yG,HH,false,1,2);
+async function replay(rid,list){
+  const tok=++playTok,r=R(rid),all=climbsOf(rid),cs=list||all,{x,yG,HH}=RG,G=geom(r,x,yG,HH,false,1,2);
   const prog=$('rprog'),dot=$('rdot'),marks=$('rmarks'),cap=$('rcap');if(!prog||!cs.length)return;
   const live=()=>tok===playTok&&$('rprog')===prog,ease=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
   const tween=(ms,fn)=>new Promise(res=>{const t0=performance.now();const st=()=>{if(!live())return res();
@@ -637,7 +651,7 @@ async function replay(rid){
   const at=h=>{prog.setAttribute('d',G.to(h));dot.setAttribute('cx',G.xa(h).toFixed(1));dot.setAttribute('cy',G.Y(h).toFixed(1))};
   marks.innerHTML='';dot.style.display='';at(0);
   for(let i=0;i<cs.length&&live();i++){const c=cs[i],top=c.result==='fail'?c.high:1;let from=0;
-    cap.textContent=`第 ${i+1} 次 · ${lab(c.date)} · ${desc(c,r)}`;
+    cap.textContent=`第 ${all.indexOf(c)+1} 次 · ${lab(c.date)}${r.type==='b'?'':' · '+MODE[cMode(c,r)]} · ${desc(c,r)}`;
     const stops=c.result==='hang'?Array.from({length:c.hangs},(_,q)=>(q+1)/(c.hangs+1)):[];
     for(const s of [...stops,top]){const a=from;await tween(850*(s-a)+140,k=>at(a+(s-a)*ease(k)));from=s;
       if(s!==top&&live()){marks.insertAdjacentHTML('beforeend',`<circle class="cur" cx="${G.xa(s).toFixed(1)}" cy="${G.Y(s).toFixed(1)}" r="4.5" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/>`);await tween(260,()=>{})}}
@@ -1288,7 +1302,7 @@ $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b
   if(d.y)draft.why=draft.why===d.y?null:d.y;
   renderSheet()};
 const findDup=()=>{if(draft.rid||!norm(draft.name))return null;const o={gym:data.gym,type:draft.type,grade:dGrade(),mode:draft.mode,wall:draft.wall,name:draft.name};return active().find(x=>sameLine(x,o))||null};
-function finishSave(useRoute){saveDraft(useRoute);viewDate=null;closeSheet();go(page==='route'?'route':'today')}
+function finishSave(useRoute){const gm=draft.type==='b'?null:MODEG(draft.mode);saveDraft(useRoute);routeSel=gm;viewDate=null;closeSheet();go(page==='route'?'route':'today')}
 // 备份成文件：手机上走系统分享（可存到"文件"或发给自己），电脑上直接下载
 function backupFile(btn){data.bk=TODAY;persist();const name='岩迹备份-'+TODAY+'.json',txt=JSON.stringify(data);
   const flash=t=>{const o=btn.textContent;btn.textContent=t;setTimeout(()=>{btn.textContent=o},1600)};
