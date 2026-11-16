@@ -240,6 +240,22 @@ nav button.on::after{content:"";position:absolute;left:50%;bottom:0;width:5px;he
 .pr .sq i.ghost{background:none;border:1px dashed var(--muted)}
 .pr .sq em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);align-self:center}
 .pr.stable .g,.pr.stable .st{color:var(--ink);font-weight:600}
+/* 阶：三个方式卡（既是概览也是选择器） */
+.mcards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.mcards.two{grid-template-columns:repeat(2,1fr)}
+.mcard{background:var(--card);border:1px solid transparent;border-radius:14px;padding:10px 11px 9px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
+.mcard.on{box-shadow:inset 0 0 0 1.4px var(--ink)}
+.mcard span{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap}
+.mcard span svg{flex:none}
+.mcard b{display:block;font-family:var(--mono);font-size:26px;font-weight:500;letter-spacing:-.03em;line-height:1.25;margin-top:3px}
+.mcard em{display:block;font-style:normal;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.45;white-space:normal}
+.mcard.off b{color:var(--hair)}
+.modegap{margin-top:12px}
+.modegap .row2{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.modegap .row2 b{font-family:var(--mono);font-size:19px;font-weight:500}
+.modegap .row2 em{font-style:normal;font-size:12px;color:var(--muted)}
+.modegap .row2 em.hd{margin-left:auto;color:var(--ink)}
+.modegap .rrow:first-of-type{border-top:1px solid var(--hair)}
 .note p{font-size:14px;line-height:1.75;margin-top:8px;text-wrap:pretty}
 .note p b{font-family:var(--mono);font-weight:500}
 .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;border:1px solid var(--hair);border-radius:20px;padding:2px 8px;color:var(--muted)}
@@ -323,12 +339,12 @@ function demo(){
    ['紫色 4 号','5.10c',15,'35:h2:p','35:f.5:p','32:h1:p','32:s','28:s','0:s'],
    ['黑色 9 号','5.10c',15,'25:s','18:s','14:s'],
    ['粉色 7 号','5.10c',12,'14:s','11:s'],
-   ['灰色 2 号','5.10d',15,'32:f.4:p','28:h3:p','28:f.6:p','25:h2:p','18:h1:p','18:s','14:s'],
-   ['黄色 10 号','5.10d',15,'11:h1:p','7:s','4:s'],
-   ['绿色 11 号','5.10d',15,'4:s'],
-   ['蓝色 12 号','5.11a',15,'14:f.5:t','11:h2:p','7:h1:p','4:s'],
+   ['灰色 2 号','5.10d',15,'32:f.4:p','28:h3:p','28:f.6:p','25:h2:p','18:h1:p','18:s','16:s::tr','14:s'],
+   ['黄色 10 号','5.10d',15,'11:h1:p','7:s','6:s::tr','4:s'],
+   ['绿色 11 号','5.10d',15,'4:s','3:s::tr'],
+   ['蓝色 12 号','5.11a',15,'14:f.5:t','11:h2:p','9:s::tr','7:h1:p','4:s'],
    ['红色 7 号','5.11a',15,'25:f.3:t','18:f.5:p','14:h3:p','11:h2:p','11:f.7:h','7:h2:p','7:f.8:p','4:h1:p'],
-   ['黑色 5 号','5.11b',15,'4:f.3:t','4:f.4:t'],
+   ['黑色 5 号','5.11b',15,'4:f.3:t','4:f.4:t','2:s::tr'],
    '抱石工厂',
    ['橙色 斜板','V1',BWALL,'21:s','9:s'],['绿色 角落','V2',BWALL,'21:s'],['蓝色 仰角','V2',BWALL,'21:f:t','21:s','9:s'],
    ['红色 屋檐','V3',BWALL,'21:f:t','21:f:p','21:s'],['紫色 动态','V3',BWALL,'21:f:t','9:f:t','9:s'],['黑色 小点','V4',BWALL,'21:f:t','21:f:t','9:f:t'],
@@ -364,7 +380,10 @@ data.routes.forEach(r=>{if(r.type!=='b'&&!r.mode){const cs=data.climbs.filter(c=
 
 const R=id=>data.routes.find(r=>r.id===id);
 const climbsOf=id=>data.climbs.filter(c=>c.rid===id).sort((a,b)=>a.t-b.t);
-const cMode=(c,r)=>r.type==='b'?'lead':r.mode||c.mode||'lead';
+// 方式以每次攀爬为准；线路的 mode 只是默认值（同一条线可以今天顶绳、明天先锋）
+const cMode=(c,r)=>r.type==='b'?'lead':c.mode||r.mode||'lead';
+const MODEG=m=>m==='lead'?'lead':'up';   // 报级别时自保并入上方保护（记录与岩壁图仍分开）
+const GNAME={lead:'先锋',up:'上方保护'};
 const firstGo=c=>c.result==='send'&&climbsOf(c.rid)[0]===c;
 const rank=c=>c.result==='send'?(firstGo(c)?3:2):c.result==='hang'?1:0;
 const dates=()=>[...new Set(data.climbs.map(c=>c.date))].sort();
@@ -384,9 +403,9 @@ const TAPE={红:'#B9503F',橙:'#D27D3E',黄:'#D8B13F',绿:'#5F8A5B',蓝:'#4F6F9E
 const tape=(name,big)=>{const n=String(name||''),k=Object.keys(TAPE).find(k=>n.includes(k+'色'))||Object.keys(TAPE).find(k=>n.startsWith(k));
   return k?`<svg class="tape${big?' big':''}" viewBox="0 0 16 7"><path d="M2.2 .5H15.5L13.8 6.5H.5Z" fill="${TAPE[k]}" stroke="rgba(31,29,25,.25)" stroke-width=".6" stroke-linejoin="round"/></svg>`:''};
 const meta=r=>r.grade+(r.type==='b'?' · 抱石':' · '+MODE[r.mode||'lead']+' · '+r.wall+'m');
-// 某一天里，同一条线的多次攀爬合成一个画图对象
-function aggs(d){const m=new Map();byDate(d).forEach(c=>{if(!m.has(c.rid))m.set(c.rid,[]);m.get(c.rid).push(c)});
-  return[...m].map(([rid,cs])=>{const r=R(rid);let best=cs[0];
+// 某一天里，同一条线同一种方式的多次攀爬合成一个画图对象（同一天两种方式 = 两个对象）
+function aggs(d){const m=new Map();byDate(d).forEach(c=>{const r=R(c.rid),k=c.rid+'|'+cMode(c,r);if(!m.has(k))m.set(k,[]);m.get(k).push(c)});
+  return[...m].map(([,cs])=>{const rid=cs[0].rid,r=R(rid);let best=cs[0];
     cs.forEach(c=>{const a=rank(c),b=rank(best);if(a>b||(a===b&&(c.result==='fail'?c.high>best.high:c.result==='hang'&&c.hangs<best.hangs)))best=c});
     return{...r,result:rank(best)===3?'first':best.result,hangs:best.result==='hang'?best.hangs:0,high:best.result==='fail'?best.high:1,
       mode:cMode(best,r),n:cs.length,cs,ghosts:cs.filter(c=>c!==best&&c.result==='fail').map(c=>c.high)}})}
@@ -836,17 +855,37 @@ $('p-mount').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   else if(b.dataset.w)wheelTo(b.dataset.w,true)};
 
 /* ---------- 阶：难度金字塔（按完攀过多少条不同的线算） ---------- */
-let pyrType='l';
+let pyrType='l',pyrMode='lead';
 // 纸面同级的野外名线（凭记忆整理，之后换成按区域核实过的数据）
 const NAMED={'5.8':["Bishop's Terrace",'优胜美地'],'5.9':['Epinephrine','红岩峡谷'],'5.10a':['Dream of Wild Turkeys','红岩峡谷'],'5.10b':['Illusion Dweller','约书亚树'],'5.10c':['Outer Limits','优胜美地'],'5.10d':['Serenity Crack','优胜美地'],'5.11a':['New Dimensions','优胜美地'],'5.11b':['The Naked Edge','埃尔多拉多峡谷'],'5.11c':['Astroman','优胜美地'],'5.11d':['Separate Reality','优胜美地'],'5.12a':['Crimson Cringe','优胜美地'],'5.12b':['Latest Rage','史密斯岩'],'5.12c':['Chain Reaction','史密斯岩'],'5.12d':['Moonlight Buttress','锡安'],'5.13a':['The Phoenix','优胜美地'],
  V2:['White Rastafarian','约书亚树'],V3:['Gunsmoke','约书亚树'],V4:['Stem Gem','约书亚树'],V5:['Blue Suede Shoes','优胜美地'],V6:['Saigon','毕晓普'],V7:['High Plains Drifter','毕晓普'],V8:['Midnight Lightning','优胜美地'],V9:['Soul Slinger','毕晓普'],V10:['Thriller','优胜美地']};
-function levels(t){const G=scale(t),st={};data.routes.forEach(r=>{if(r.type!==t)return;const cs=climbsOf(r.id).filter(c=>cMode(c,r)==='lead');if(!cs.length)return;
-    const o=st[r.grade]||(st[r.grade]={tries:0,sends:0,climbs:0});o.tries++;o.climbs+=cs.length;if(cs.some(c=>c.result==='send'))o.sends++});
-  let limit=-1,stable=-1;G.forEach((g,i)=>{const s=st[g];if(s&&s.sends>=1)limit=i;if(s&&s.sends>=3)stable=i});
+function levels(t,g){const G=scale(t),st={};
+  data.routes.forEach(r=>{if(r.type!==t)return;
+    const cs=climbsOf(r.id).filter(c=>t==='b'||MODEG(cMode(c,r))===(g||'lead'));
+    if(!cs.length)return;
+    const o=st[r.grade]||(st[r.grade]={tries:0,sends:0,climbs:0});o.tries++;o.climbs+=cs.length;
+    if(cs.some(c=>c.result==='send'))o.sends++});
+  let limit=-1,stable=-1;G.forEach((gr,i)=>{const s=st[gr];if(s&&s.sends>=1)limit=i;if(s&&s.sends>=3)stable=i});
   return{G,st,limit,stable,goal:Math.min(limit+1,G.length-1)}}
+// 一组方式的汇总：完攀条数、摸过的条数（方式卡用）
+function modeSum(t,g){const L=levels(t,g);let sends=0,tries=0;Object.values(L.st).forEach(o=>{sends+=o.sends;tries+=o.tries});return{L,sends,tries}}
+// 同一条线被两种方式爬过的对比：结果不一样的优先，用来解释"方式落差"
+function crossMode(){const all=[],rows=[];
+  data.routes.forEach(r=>{if(r.type==='b')return;const cs=climbsOf(r.id),
+    lc=cs.filter(c=>MODEG(cMode(c,r))==='lead'),uc=cs.filter(c=>MODEG(cMode(c,r))==='up');
+    if(!lc.length||!uc.length)return;
+    const ls=lc.some(c=>c.result==='send'),us=uc.some(c=>c.result==='send'),o={r,lc,uc,ls,us};
+    all.push(o);if(ls!==us)rows.push(o)});
+  rows.sort((a,b)=>(b.us-b.ls)-(a.us-a.ls)||(b.lc.length+b.uc.length)-(a.lc.length+a.uc.length));
+  return{all,rows}}
+const gShow=(t,i)=>i>=0?short(scale(t)[i]):'—';
 function renderPyr(){
-  const anyB=data.routes.some(r=>r.type==='b');if(!anyB)pyrType='l';
-  const {G,st,limit,stable,goal}=levels(pyrType),TARGET=[1,2,4,6];let rows='';
+  const anyB=data.routes.some(r=>r.type==='b');
+  if(!anyB)pyrType='l';
+  if(pyrType==='b')pyrMode='lead';
+  const LD=modeSum('l','lead'),UP=modeSum('l','up'),BD=modeSum('b');
+  const sel=pyrType==='b'?BD:(pyrMode==='up'?UP:LD);
+  const {G,st,limit,stable,goal}=sel.L,TARGET=[1,2,4,6];let rows='';
   let topRow=goal;G.forEach((g,i)=>{if(st[g]&&i>topRow)topRow=i});
   for(let i=topRow;i>=0;i--){const g=G[i],s=st[g]||{tries:0,sends:0},t=TARGET[goal-i]||0;
     if(!s.tries&&!t)continue;
@@ -855,18 +894,32 @@ function renderPyr(){
     rows+=`<div class="pr${i===stable?' stable':''}"><span class="g">${g}</span><span class="sq">${'<i></i>'.repeat(show)}${'<i class="ghost"></i>'.repeat(ghost)}${s.sends>10?`<em>+${s.sends-10}</em>`:''}</span><span class="st">${word}</span></div>`}
   let badges='';for(let i=goal;i>=0&&i>=goal-6;i--){const nm=NAMED[G[i]];if(!nm)continue;const lit=i<=stable;
     badges+=`<div class="badge${lit?' lit':''}"><span class="g">${G[i]}</span><b>${nm[0]}</b><em>${nm[1]}</em><span class="s">${lit?'● 已点亮':'站稳后点亮'}</span></div>`}
+  const mcard=(t,k,icon,label)=>{const obj=t==='b'?BD:(k==='up'?UP:LD),on=t==='b'?pyrType==='b':(pyrType==='l'&&pyrMode===k);
+    return`<button class="mcard${on?' on':''}${obj.tries?'':' off'}" data-pt="${t}"${t==='l'?` data-pm="${k}"`:''}>
+      <span>${ico(icon,12)}${label}</span><b>${gShow(t,obj.L.stable)}</b>
+      <em>${obj.tries?`极限 ${gShow(t,obj.L.limit)}<br>完攀 ${obj.sends} 条`:'还没开始'}</em></button>`};
+  const cards=`<div class="mcards${anyB?'':' two'}">${mcard('l','lead','lead','先锋')}${mcard('l','up','tr','上方保护')}${anyB?mcard('b','b','b','抱石'):''}</div>
+    <div class="sub" style="margin-top:8px">大数字是这个方式站稳的级别；极限是完攀过的最高一级。</div>`;
+  let gap='';
+  if(pyrType!=='b'&&data.routes.some(r=>r.type==='l')){
+    const CM=crossMode(),a=LD.L.stable,b=UP.L.stable;
+    const gd=(a<0||b<0)?(a<0&&b<0?'两边都还没站稳':'有一边还没站稳'):(a-b===0?'两种方式在同一级':a>b?`先锋高 ${a-b} 级`:`上方保护高 ${b-a} 级`);
+    gap=`<h2>方式落差</h2><div class="sub">同一条线被两种方式爬过的对比，比跨方式比级别更可信。自保算在上方保护里。</div>
+      <div class="card modegap">
+        <div class="row2"><b>${GNAME.lead} ${gShow('l',a)}</b><em>· ${GNAME.up} ${gShow('l',b)}</em><em class="hd">${gd}</em></div>
+        <div class="sub" style="margin-top:8px">${CM.all.length?`有 ${CM.all.length} 条线两种方式都爬过${CM.rows.length?'，下面这几条的结果不一样':''}。`:'还没有同一条线两种方式的记录，上面的级别只能各自看。'}</div>
+        ${CM.rows.slice(0,3).map(o=>`<div class="rrow plain"><span><b>${tape(o.r.name)}${esc(o.r.name)}</b><em>先锋 ${o.lc.length} 次${o.ls?' · 完攀':' · 没完攀'} · 上方保护 ${o.uc.length} 次${o.us?' · 完攀':' · 没完攀'}</em></span></div>`).join('')}
+      </div>`;
+  }
   $('p-pyr').innerHTML=`
-   <div class="row"><div class="eyebrow">难度阶梯 · ${pyrType==='l'?'先锋完攀':'抱石完攀'}</div>
-     ${anyB?`<div class="tog small"><button data-t="l" class="${pyrType==='l'?'on':''}">难度</button><button data-t="b" class="${pyrType==='b'?'on':''}">抱石</button></div>`:''}</div>
-   <div class="row" style="margin-top:8px;align-items:flex-end">
-     <div><div class="big">${stable>=0?short(G[stable]):'—'}</div><div class="sub" style="margin-top:8px">站稳的级别</div></div>
-     <div style="text-align:right"><div class="big" style="font-size:30px;color:var(--muted)">${limit>=0?short(G[limit]):'—'}</div><div class="sub" style="margin-top:8px">摸到过的极限</div></div>
-   </div>
-   <div class="card">${rows||'<div class="sub">还没有记录。</div>'}</div>
+   <div class="row"><div class="eyebrow">难度阶梯 · ${pyrType==='b'?'抱石':GNAME[pyrMode]}</div></div>
+   ${cards}
+   <div class="card" style="margin-top:14px">${rows||'<div class="sub">还没有记录。</div>'}</div>
    <div class="legend"><span><i class="k"></i>一条完攀过的线</span><span><i class="k ghost"></i>冲 ${G[goal]} 之前建议补上的</span></div>
-   <div class="sub" style="margin-top:12px">同一条线重复爬只算一条。完攀 1 条算<b style="color:var(--ink)">解锁</b>，3 条算<b style="color:var(--ink)">站稳</b>，5 条算<b style="color:var(--ink)">吃透</b>，你的级别按站稳的那一级来算。</div>
-   ${badges?`<h2>同级名线</h2><div class="sub">每站稳一级，点亮一条纸面同级的野外名线。岩馆和野外的手感差很多，只当路标看。</div><div class="strip">${badges}</div>`:''}`}
-$('p-pyr').onclick=e=>{const b=e.target.closest('button[data-t]');if(b){pyrType=b.dataset.t;renderPyr()}};
+   <div class="sub" style="margin-top:12px">同一条线重复爬只算一条。完攀 1 条算<b style="color:var(--ink)">解锁</b>，3 条算<b style="color:var(--ink)">站稳</b>，5 条算<b style="color:var(--ink)">吃透</b>，你的级别按站稳的那一级来算。难度按方式分开统计，不同方式的级别不能直接横比。</div>
+   ${badges?`<h2>同级名线</h2><div class="sub">每站稳一级，点亮一条纸面同级的野外名线。岩馆和野外的手感差很多，只当路标看。</div><div class="strip">${badges}</div>`:''}
+   ${gap}`}
+$('p-pyr').onclick=e=>{const b=e.target.closest('button[data-pt]');if(!b)return;pyrType=b.dataset.pt;if(b.dataset.pm)pyrMode=b.dataset.pm;renderPyr()};
 
 /* ---------- 复盘 ---------- */
 /* ---------- 迹：筛一个周期 → 每一次 → 这段时间的总结 → 看出来的 → 交给 AI ---------- */
@@ -894,7 +947,7 @@ function stats(cs,from){const S={n:cs.length};if(!cs.length)return S;
   S.ds=ds;S.days=ds.length;S.lines=rs.length;S.rs=rs;S.perWeek=ds.length/weeks;S.weeks=weeks;
   S.gap=ds.reduce((m,d,i)=>i?Math.max(m,dayGap(ds[i-1],d)):0,0);
   S.avgLines=ds.reduce((a,d)=>a+new Set(cs.filter(c=>c.date===d).map(c=>c.rid)).size,0)/ds.length;S.avgClimbs=cs.length/ds.length;S.m=meters(cs);
-  S.modes=ORDER.map(k=>({k,n:cs.filter(c=>zoneOf(R(c.rid))===k).length})).filter(o=>o.n);
+  S.modes=ORDER.map(k=>({k,n:cs.filter(c=>{const r=R(c.rid);return(r.type==='b'?'b':cMode(c,r))===k}).length})).filter(o=>o.n);
   S.sends=cs.filter(send).length;S.rate=S.sends/cs.length;
   const L=cs.filter(c=>R(c.rid).type==='l'),lv=levels('l');S.lv=lv;
   // 掉在哪：前段 / 中段 / 后段
@@ -904,31 +957,34 @@ function stats(cs,from){const S={n:cs.length};if(!cs.length)return S;
   S.why=why(cs);const atLim=c=>{const r=R(c.rid);return r.type==='l'&&lv.limit>=0&&gi(r)>=lv.limit};
   S.whyHi=why(cs.filter(atLim));S.whyLo=why(cs.filter(c=>!atLim(c)));
   const hg=L.filter(c=>c.result==='hang');S.takes=hg.length?hg.reduce((a,c)=>a+(c.hangs||1),0)/hg.length:0;S.hangN=hg.length;
-  // 正在磕的线：这段时间爬过、总共爬了 3 次以上、还没完攀
-  S.proj=rs.filter(r=>r.type==='l'&&!r.retired).map(r=>({r,all:climbsOf(r.id)})).filter(o=>o.all.length>=3&&!o.all.some(send)).sort((x,y)=>y.all[y.all.length-1].t-x.all[x.all.length-1].t||y.all.length-x.all.length).slice(0,3);
+  // 正在磕的线：这段时间爬过、总共 3 次以上，且最近在用的方式还没完攀（顶绳完攀不代表先锋过了）
+  S.proj=rs.filter(r=>r.type==='l'&&!r.retired).map(r=>{const all=climbsOf(r.id),lastMode=cMode(all[all.length-1],r),
+    seq=all.filter(c=>cMode(c,r)===lastMode);
+    return{r,all,seq,lastMode,sent:seq.some(send)}})
+    .filter(o=>o.all.length>=3&&o.seq.length>=2&&!o.sent).sort((x,y)=>y.all[y.all.length-1].t-x.all[x.all.length-1].t||y.all.length-x.all.length).slice(0,3);
   // 一次过和完攀（先锋）
-  const ls=cs.filter(c=>send(c)&&zoneOf(R(c.rid))==='lead'),mx=x=>x.reduce((m,c)=>Math.max(m,gi(R(c.rid))),-1);S.fl={send:mx(ls),flash:mx(ls.filter(firstGo))};
-  // 完攀一条线平均爬几次（这段时间里第一次完攀的先锋线）
-  const got=rs.filter(r=>zoneOf(r)==='lead').map(r=>{const all=climbsOf(r.id),i=all.findIndex(send);return i>=0&&cs.includes(all[i])?i+1:0}).filter(Boolean);S.tries=got.length?got.reduce((x,y)=>x+y,0)/got.length:0;S.triesN=got.length;
+  const ls=cs.filter(c=>send(c)&&cMode(c,R(c.rid))==='lead'),mx=x=>x.reduce((m,c)=>Math.max(m,gi(R(c.rid))),-1);S.fl={send:mx(ls),flash:mx(ls.filter(firstGo))};
+  // 完攀一条线平均爬几次（这段时间里第一次用先锋完攀的线）
+  const got=rs.filter(r=>r.type==='l').map(r=>{const all=climbsOf(r.id),i=all.findIndex(c=>c.result==='send'&&cMode(c,r)==='lead');return i>=0&&cs.includes(all[i])?i+1:0}).filter(Boolean);S.tries=got.length?got.reduce((x,y)=>x+y,0)/got.length:0;S.triesN=got.length;
   // 练法：新线占多少、站稳级别以下的量占多少
   S.newLines=rs.filter(r=>cs.includes(climbsOf(r.id)[0])).length;
-  const Ld=L.filter(c=>zoneOf(R(c.rid))==='lead');S.below=lv.stable>0&&Ld.length?Ld.filter(c=>gi(R(c.rid))<lv.stable).length/Ld.length:null;S.leadN=Ld.length;
+  const Ld=L.filter(c=>cMode(c,R(c.rid))==='lead');S.below=lv.stable>0&&Ld.length?Ld.filter(c=>gi(R(c.rid))<lv.stable).length/Ld.length:null;S.leadN=Ld.length;
   return S}
 const sign=(x,eps)=>x>eps?'↑':x<-eps?'↓':'→';
-const projSeq=o=>o.all.map(c=>c.result==='hang'?`take ${c.hangs||1}`:`掉在 ${pct(c.high)}%`).join(' → ');
-const projBest=o=>o.all.reduce((x,c)=>rank(c)>rank(x)||(rank(c)===rank(x)&&(c.result==='fail'?c.high>x.high:c.hangs<x.hangs))?c:x);
+const projSeq=o=>o.seq.map(c=>c.result==='hang'?`take ${c.hangs||1}`:`掉在 ${pct(c.high)}%`).join(' → ');
+const projBest=o=>o.seq.reduce((x,c)=>rank(c)>rank(x)||(rank(c)===rank(x)&&(c.result==='fail'?c.high>x.high:c.hangs<x.hangs))?c:x);
 // 结论卡片：每张回答一个问题，样本不够的不出。顺序是固定的（s 越大越靠前），按对下一次去岩馆有没有用排；排第一的带图放大，其余是小格子
 function insights(S,P){const out=[],G=S.lv.G,bar=(l,v,t,on)=>`<div class="br${on?' on':''}"><span>${l}</span><i><u style="width:${Math.max(3,v*100).toFixed(0)}%"></u></i><b>${t}</b></div>`;
   if(S.proj.length){const multiGym=!gymSel&&new Set(data.climbs.map(c=>R(c.rid).gym)).size>1;
-    const spark=(o,W,H)=>{const n=o.all.length,X=i=>10+(n>1?i*(W-20)/(n-1):0),Y=c=>H-10-(c.result==='hang'?1:c.high)*(H-24);
+    const spark=(o,W,H)=>{const n=o.seq.length,X=i=>10+(n>1?i*(W-20)/(n-1):0),Y=c=>H-10-(c.result==='hang'?1:c.high)*(H-24);
       let g=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14H${W-3}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="1 4"/><path d="M3 ${H-6}H${W-3}" stroke="var(--ink)" stroke-width="1"/>
-        <path d="${o.all.map((c,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(c).toFixed(1)).join('')}" stroke="var(--ink)" stroke-width="1.4"/>`;
-      o.all.forEach((c,i)=>{g+=c.result==='hang'?`<circle cx="${X(i).toFixed(1)}" cy="${Y(c).toFixed(1)}" r="3.4" fill="var(--card)" stroke="var(--ink)" stroke-width="1.4"/>`:cross(X(i),Y(c),2.8,'var(--ink)',1.5)});return g+'</svg>'};
-    const o=S.proj[0],bst=projBest(o),one=S.proj.length===1,mx=Math.max(...S.proj.map(x=>x.all.length));
+        <path d="${o.seq.map((c,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(c).toFixed(1)).join('')}" stroke="var(--ink)" stroke-width="1.4"/>`;
+      o.seq.forEach((c,i)=>{g+=c.result==='hang'?`<circle cx="${X(i).toFixed(1)}" cy="${Y(c).toFixed(1)}" r="3.4" fill="var(--card)" stroke="var(--ink)" stroke-width="1.4"/>`:cross(X(i),Y(c),2.8,'var(--ink)',1.5)});return g+'</svg>'};
+    const o=S.proj[0],bst=projBest(o),one=S.proj.length===1;
     out.push({s:100,k:'正在磕的线',v:S.proj.length,u:'条',c:`最近是「${esc(o.r.name)}」${short(o.r.grade)}`,
-      t:one?`「${esc(o.r.name)}」${o.r.grade} 磕了 ${o.all.length} 次`:`你在磕 ${S.proj.length} 条线`,rid:one?o.r.id:null,
-      pic:one?spark(o,300,74).replace('width="300" height="74"','width="100%"'):S.proj.map(x=>`<button class="prow" data-rid="${x.r.id}"><span><b>${tape(x.r.name)}${esc(x.r.name)}<i>${x.r.grade}</i></b><em>${multiGym?esc(x.r.gym)+' · ':''}${x.all.length} 次</em></span>${spark(x,104,46)}</button>`).join(''),
-      n:`${one?'从左到右':'小图从左到右'}是每一次到的位置，虚线是顶，圆圈是 take 到顶。爬过 3 次以上还没完攀的线算在磕，最近爬过的排前面`})}
+      t:one?`「${esc(o.r.name)}」${o.r.grade} ${MODE[o.lastMode]}磕了 ${o.seq.length} 次`:`你在磕 ${S.proj.length} 条线`,rid:one?o.r.id:null,
+      pic:one?spark(o,300,74).replace('width="300" height="74"','width="100%"'):S.proj.map(x=>`<button class="prow" data-rid="${x.r.id}"><span><b>${tape(x.r.name)}${esc(x.r.name)}<i>${x.r.grade}</i></b><em>${multiGym?esc(x.r.gym)+' · ':''}${x.seq.length} 次</em></span>${spark(x,104,46)}</button>`).join(''),
+      n:`${one?'从左到右':'小图从左到右'}是每一次到的位置，虚线是顶，圆圈是 take 到顶。爬过 3 次以上、最近在用的方式还没完攀的线算在磕，最近爬过的排前面`})}
   if(S.fall.n>=4){const f=S.fall,z=[['后段',f.hi],['中段',f.mid],['前段',f.lo]],top=[...z].sort((x,y)=>y[1]-x[1])[0],dom=top[1]/f.n,W=64;
     let g=`<svg viewBox="0 0 ${W} 112" width="${W}" height="112" fill="none" stroke-linecap="round"><path d="M4 104H${W-4}" stroke="var(--ink)" stroke-width="1.1"/><path d="M32 104V12" stroke="var(--hair)" stroke-width="1.6"/><path d="M8 73.3H${W-8}M8 42.7H${W-8}" stroke="var(--muted)" stroke-width=".7" stroke-dasharray="1 4"/>`;
     f.hs.forEach((h,i)=>{g+=cross(32+((i*37)%19-9),104-h*92,2.6,'var(--ink)',1.3)});
@@ -951,9 +1007,11 @@ function reviewTop(){const gy=[...new Set(data.climbs.map(c=>R(c.rid).gym))];if(
   return`<div class="row"><div class="pseg">${PERS.map(p=>`<button data-per="${p[0]}" class="${p[0]===perKey()?'on':''}">${p[1]}</button>`).join('')}</div>
     ${gy.length>1?`<button class="link" id="gymF">${gymSel?esc(gymSel):'全部岩馆'} ▾</button>`:''}</div>`}
 function summary(S){const cs=scope(),all=data.climbs.filter(c=>!gymSel||R(c.rid).gym===gymSel);
-  const best=(src,k)=>{const rr=[...new Set(src.map(c=>c.rid))].map(R).filter(r=>zoneOf(r)===k),fs=r=>climbsOf(r.id).find(c=>c.result==='send'&&src.includes(c));
-    const sent=rr.filter(fs).sort((a,b)=>gi(b)-gi(a)||fs(b).t-fs(a).t);return sent[0]?{r:sent[0],c:fs(sent[0])}:null};
-  const per=ORDER.map(k=>({k,n:cs.filter(c=>zoneOf(R(c.rid))===k).length,b:best(cs,k)})).filter(o=>o.n);
+  const cm=c=>{const r=R(c.rid);return r.type==='b'?'b':cMode(c,r)};
+  const best=(src,k)=>{const ss=src.filter(c=>cm(c)===k),rr=[...new Set(ss.map(c=>c.rid))].map(R).filter(Boolean),
+    fs=r=>climbsOf(r.id).find(c=>c.result==='send'&&ss.includes(c));
+    const sent=rr.map(r=>({r,c:fs(r)})).filter(o=>o.c).sort((a,b)=>gi(b.r)-gi(a.r)||b.c.t-a.c.t);return sent[0]||null};
+  const per=ORDER.map(k=>({k,n:cs.filter(c=>cm(c)===k).length,b:best(cs,k)})).filter(o=>o.n);
   const hero=per.find(o=>o.k===heroSel)||[...per].sort((a,b)=>b.n-a.n)[0],rest=per.filter(o=>o!==hero),ever=best(all,hero.k);
   const note=perKey()==='all'||!hero.b||!ever?'':gi(ever.r)>gi(hero.b.r)?`历史最高 ${ever.r.grade}`:'';
   return`<div class="row" style="align-items:baseline;margin-top:32px"><h2 style="margin:0">${perName()}</h2><span class="eyebrow">${lab(S.ds[0])} — ${lab(S.ds[S.ds.length-1])}</span></div>
@@ -996,7 +1054,7 @@ function aiText(){const cs=scope(),S=stats(cs,perFrom()),pc=prevScope(),P=pc&&pc
   if(S.hangN)x.push(`· take 到顶 ${S.hangN} 次，平均每次 take ${S.takes.toFixed(1)} 次`);
   if(S.why.n){x.push(`· 我自己标的原因（共 ${S.why.n} 次）：${wl(S.why)}${few(S.why.n,4)}`);if(S.whyHi.n&&S.whyLo.n&&S.lv.limit>=0)x.push(`  其中 ${G[S.lv.limit]} 及以上：${wl(S.whyHi)}；${G[S.lv.limit]} 以下：${wl(S.whyLo)}`)}
   if(x.length)L.push('\n【失败画像】\n'+x.join('\n'));
-  if(S.proj.length)L.push('\n【正在磕、还没完攀的线】（按时间顺序列出每次的结果）\n'+S.proj.map(o=>`· 「${o.r.name}」${o.r.grade} ${MODE[o.r.mode||'lead']} ${o.r.wall}m，${o.all.length} 次：${projSeq(o)}${(w=>w.n?`；原因：${wl(w)}`:'')((()=>{const w={pump:0,tech:0,head:0,n:0};o.all.forEach(c=>{if(c.why){w[c.why]++;w.n++}});return w})())}`).join('\n'));
+  if(S.proj.length)L.push('\n【正在磕、还没完攀的线】（只列最近在用的方式，按时间顺序）\n'+S.proj.map(o=>`· 「${o.r.name}」${o.r.grade} ${MODE[o.lastMode]} ${o.r.wall}m，${o.seq.length} 次：${projSeq(o)}${(w=>w.n?`；原因：${wl(w)}`:'')((()=>{const w={pump:0,tech:0,head:0,n:0};o.seq.forEach(c=>{if(c.why){w[c.why]++;w.n++}});return w})())}`).join('\n'));
   const pr=[`· ${S.lines} 条线里 ${S.newLines} 条是这段时间新爬的，其余是之前就在爬的`];if(S.below!=null)pr.push(`· 先锋攀爬里，${G[S.lv.stable]} 以下（已站稳级别以下）的占 ${pct(S.below)}%`);L.push('\n【练法】\n'+pr.join('\n'));
   if(P&&P.days>=2)L.push(`\n【和上一个同样长的周期比】\n· 频率：每周 ${P.perWeek.toFixed(1)} 次 → ${S.perWeek.toFixed(1)} 次`+(P.fl.send>=0&&S.fl.send>=0?`\n· 先锋最高完攀：${G[P.fl.send]} → ${G[S.fl.send]}`:''));
   L.push('\n【数据里没有的】\n岩壁角度、岩点类型、每条线的风格、组间休息时间、体重和力量数据、室外攀岩经历。这些请不要臆测，需要的话直接问我。');
@@ -1020,7 +1078,7 @@ $('p-review').onclick=e=>{if(e.target.closest('#heat')){histAt(e);return}const b
 /* ---------- 底部面板：选线 / 记一次 / 描线 / 岩馆 / 设置 ---------- */
 let mode='pick',draft={},padPts=[],padPhoto=null;
 function startForm(rid){const r=rid&&R(rid),last=r&&climbsOf(rid).pop();
-  draft=r?{rid,type:r.type,grade:r.grade,wall:r.wall,mode:r.mode||'lead',shape:r.shape||null,name:r.name,result:'send',hangs:1,high:.6,why:null}
+  draft=r?{rid,type:r.type,grade:r.grade,wall:r.wall,mode:(last&&last.mode)||r.mode||'lead',shape:r.shape||null,name:r.name,result:'send',hangs:1,high:.6,why:null}
          :{rid:null,type:draft.type||'l',gl:draft.gl||'5.10c',gb:draft.gb||'V2',wall:gymObj().wall||15,mode:draft.mode||'lead',shape:null,name:'',result:'send',hangs:1,high:.6,why:null}}
 const dGrade=()=>draft.rid?draft.grade:draft.type==='b'?draft.gb:draft.gl;
 const dRes=()=>{const b=draft.type==='b';return draft.result==='hang'&&(b||draft.mode==='auto')?'send':draft.result};
@@ -1121,8 +1179,9 @@ function renderSheet(){
        ${b?'<div class="lenCol"><div class="sub" style="margin:auto 0">抱石画成地上的一块石头，不用填线长。</div></div>'
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
      <input class="field" id="rname" placeholder="名字，比如 红色 7 号（可不填）" maxlength="24" value="${esc(draft.name)}">`
-   :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft.name,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${meta(R(draft.rid))} · 第 ${climbsOf(draft.rid).length+1} 次</div>
+   :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft.name,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${b?meta(R(draft.rid)):draft.grade+" · "+draft.wall+"m"} · 第 ${climbsOf(draft.rid).length+1} 次</div>
        ${b?'<div class="sub">抱石画成地上的一块石头。</div>':''}</div><button class="preview" id="pv">${previewSvg()}</button></div>`}
+   ${isNew||b?'':`<div class="lbl">本次方式</div><div class="tog tri" style="margin-top:8px">${Object.entries(MODE).map(([k,t])=>`<button data-cm="${k}" class="${draft.mode===k?'on':''}">${ico(k,13)}${t}</button>`).join('')}</div>`}
    <div class="lbl">这次的结果</div>
    <div class="seg${RES.length===3?' three':''}">${RES.map(([k,t])=>`<button data-r="${k}" class="${res===k?'on':''}">${t}</button>`).join('')}</div>
    <div class="extra">${extra}</div>
@@ -1185,6 +1244,7 @@ function saveDraft(useRoute){const b=draft.type==='b',res=dRes();let r=draft.rid
       if(!b&&draft.shape)r.shape=draft.shape;data.routes.push(r);
       if(!b){const g=data.gyms.find(x=>x.name===data.gym);if(g)g.wall=draft.wall}}}
   const c={rid:r.id,date:TODAY,t:Date.now(),result:res,hangs:res==='hang'?draft.hangs:0,high:res==='fail'?(b?.5:draft.high):1};
+  if(!b&&draft.mode)c.mode=draft.mode;   // 这次实际用的方式（线路的 mode 不动）
   if(res!=='send'&&draft.why)c.why=draft.why;
   data.climbs.push(c);persist();return r}
 $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;fwSync();
@@ -1221,6 +1281,7 @@ $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b
   if(d.ty)draft.type=d.ty;
   if(d.g){const G=scale(draft.type),i=Math.max(0,Math.min(G.length-1,G.indexOf(dGrade())+ +d.g));draft.type==='b'?draft.gb=G[i]:draft.gl=G[i]}
   if(d.m)draft.mode=d.m;
+  if(d.cm)draft.mode=d.cm;
   if(d.l)draft.wall=Math.max(5,Math.min(40,draft.wall+ +d.l));
   if(d.r)draft.result=d.r;
   if(d.h)draft.hangs=Math.max(1,Math.min(6,draft.hangs+ +d.h));
