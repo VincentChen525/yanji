@@ -1878,24 +1878,15 @@ async function drawSticker(ctx,D){
   const mountBrandW=sBrand(ctx,26,16,20,SHARE_INK,SHARE_ACC,'#F5EEDF');
   sText(ctx,D.kindLabel||'SUMMIT',26+mountBrandW+7,30,8,SHARE_MUTED);
   sText(ctx,D.date,406,30,9,SHARE_MUTED,'right');
-  let dx=(W-380)/2,dy=160,dw=380,dh=150;
-  if(D.kind==='b'){
-    // 建筑做成竖着的白色贴纸卡，不硬套山形，也不至于细成一根针
-    const bw=168,bh=276;dx=(W-bw)/2;dy=128;dw=bw;dh=bh;
-    ctx.save();ctx.shadowColor='rgba(31,29,25,.22)';ctx.shadowBlur=16;ctx.shadowOffsetY=8;sRound(ctx,dx,dy,bw,bh,10);ctx.fillStyle='#FFFDF7';ctx.fill();ctx.restore();
-    ctx.save();sRound(ctx,dx,dy,bw,bh,10);ctx.strokeStyle='rgba(31,29,25,.16)';ctx.lineWidth=.8;ctx.stroke();ctx.restore();
-    const A=artOf(D.name),aw=Math.max(1,A.w||100),ah=100,sy=Math.min((bw-26)/aw,(bh-26)/ah),ox=dx+(bw-aw*sy)/2,oy=dy+bh-14-ah*sy;
-    ctx.save();ctx.beginPath();ctx.rect(dx+8,dy+8,bw-16,bh-16);ctx.clip();
-    ctx.translate(ox,oy);ctx.scale(sy,sy);ctx.strokeStyle=SHARE_INK;ctx.lineWidth=1.6/sy;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke(new Path2D(A.d));
-    if(A.d2){ctx.strokeStyle=SHARE_MUTED;ctx.lineWidth=.8/sy;ctx.stroke(new Path2D(A.d2))}ctx.restore();
-    ctx.beginPath();ctx.arc(ox+(A.ax||aw/2)*sy,oy+2,3.2,0,7);ctx.fillStyle=SHARE_ACC;ctx.fill();
-  } else {
+  // 贴纸自适应：山/建筑都按原图宽高比缩放，不留固定白卡的空白
+  const isB=D.kind==='b',maxW=380,maxH=isB?232:192,topY=isB?112:160;
   let img=null;try{img=await shareLoadImg('brand/share/sticker-'+D.num+'.png')}catch(e){}
-  const maxW=380,maxH=192;if(img){const sc=Math.min(maxW/img.width,maxH/img.height);dw=img.width*sc;dh=img.height*sc;dx=(W-dw)/2;dy=160}
+  let dw=maxW,dh=isB?maxH*.75:150,dx=(W-dw)/2,dy=topY;
+  if(img){const sc=Math.min(maxW/img.width,maxH/img.height);dw=img.width*sc;dh=img.height*sc;dx=(W-dw)/2;dy=topY}
   function hasInk(im){try{const w=Math.min(260,im.width),h=Math.max(1,Math.round(im.height*w/im.width)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');c.drawImage(im,0,0,w,h);const d=c.getImageData(0,0,w,h).data;let n=0;for(let i=0;i<d.length;i+=4){if(d[i+3]>100&&d[i]<110&&d[i+1]<110&&d[i+2]<110)n++}return n>18}catch(e){return false}}
   if(img&&hasInk(img)){ctx.save();ctx.shadowColor='rgba(31,29,25,.22)';ctx.shadowBlur=16;ctx.shadowOffsetY=8;ctx.drawImage(img,dx,dy,dw,dh);ctx.restore()}
   else{
-    const asp=D.asp||3.5;if(!img){dh=dw/asp;if(dh>192){dh=192;dw=dh*asp;dx=(W-dw)/2}}
+    const asp=D.asp||3.5;if(!img){dh=dw/asp;if(dh>maxH){dh=maxH;dw=dh*asp;dx=(W-dw)/2}}
     const poly=D.poly||[[0,1],[.2,.3],[.42,.55],[.62,.12],[.82,.5],[1,1]];
     const mk=()=>{ctx.beginPath();poly.forEach((p,i)=>{const x=dx+p[0]*dw,y=dy+p[1]*dh;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()};
     ctx.save();ctx.shadowColor='rgba(31,29,25,.22)';ctx.shadowBlur=16;ctx.shadowOffsetY=8;mk();ctx.fillStyle='#FFFDF7';ctx.fill();ctx.restore();
@@ -1907,7 +1898,6 @@ async function drawSticker(ctx,D){
     ctx.restore();
     ctx.beginPath();ctx.arc(ox+(A.ax||aw/2)*sy,oy+2,3.2,0,7);ctx.fillStyle=SHARE_ACC;ctx.fill();
   }
-  }
   // 橙色胶带标题
   ctx.save();ctx.translate(18,120);ctx.rotate(-8*Math.PI/180);ctx.fillStyle='rgba(226,85,43,.9)';ctx.fillRect(0,0,154,34);sText(ctx,D.tapeLabel,16,22,12,'#FFF8EC');ctx.restore();
   const cardDone=D.left<=0;
@@ -1916,7 +1906,7 @@ async function drawSticker(ctx,D){
   // 虚线和箭头
   const peakX=dx+dw*.58,peakY=dy+dh*.08;
   if(!cardDone){ctx.save();ctx.strokeStyle=SHARE_ACC;ctx.lineWidth=1.4;ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(342,96);ctx.quadraticCurveTo(332,140,peakX+8,peakY+8);ctx.stroke();ctx.restore()}
-  else{ctx.save();ctx.strokeStyle='rgba(226,85,43,.6)';ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(peakX,peakY,10,0,7);ctx.stroke();ctx.restore()}
+  /* 已完成时不再画箭头/小圈，避免指到奇怪的位置 */
   // 印章
   ctx.save();ctx.strokeStyle='rgba(226,85,43,.8)';ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(374,314,38,0,7);ctx.stroke();sText(ctx,D.stampTop,374,306,10,SHARE_ACC,'center');sText(ctx,D.date,374,322,8.5,SHARE_ACC,'center');ctx.restore();
   // 小纸条
