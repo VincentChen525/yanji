@@ -4,8 +4,8 @@
 产物：
 1. shengji-prototype.html 里的 ART / ART2 / AW / AX（山页、线路图用的线描路径）。
 2. brand/share/sticker-<n>.png：29 个山峰/建筑的透明贴纸（白色剪影 + 线稿）。
-3. shengji-prototype.html 里的 SHARE_STICKER_NUM / SHARE_STICKER_POLY / SHARE_STICKER_ASPECT
-   （分享卡按当前目标取贴纸和剪影；改 art 后重跑本脚本即可，不要手改这些常量）。
+3. shengji-prototype.html 里的 SHARE_STICKER_NUM / SHARE_STICKER_POLY / SHARE_STICKER_ASPECT /
+   SHARE_STICKER_XFORM（分享卡按当前目标取贴纸、剪影，以及线稿对齐到剪影的变换；改 art 后重跑本脚本即可，不要手改这些常量）。
 
 依赖：Pillow、numpy、scipy（只用 ndimage 的膨胀/填洞/连通域）。
 贴纸是从 art/<stem>.png 的线稿抠剪影；新增一张图时，svg 和 png 都要放进 art/，再运行本脚本。
@@ -89,7 +89,7 @@ def convert(svg):
         q = simplify([((x - minx) * kx, (y - miny) * k) for x, y in pts], TOL)
         d = 'M' + 'L'.join(f'{num(x)} {num(y)}' for x, y in q)
         (heavy if sw >= 5 else light).append(d)
-    return ''.join(heavy), ''.join(light), w, round((ax - minx) * kx, 1)
+    return ''.join(heavy), ''.join(light), w, round((ax - minx) * kx, 1), {'minx': minx, 'miny': miny, 'kx': kx, 'k': k}
 
 
 def make_sticker(png_path, out_path, np, ndi, Image):
@@ -115,7 +115,7 @@ def make_sticker(png_path, out_path, np, ndi, Image):
         h = round(out.height * STICKER_WIDTH / out.width)
         out = out.resize((STICKER_WIDTH, h), Image.LANCZOS)
     out.save(out_path)
-    return out
+    return out, (x0, y0, x1, y1)
 
 
 def sticker_shape(out_path, np, Image):
@@ -156,9 +156,9 @@ def main():
 
     STICKER_DIR.mkdir(parents=True, exist_ok=True)
     art, art2, aw, axs = [], [], [], []
-    nums, polys, aspects = {}, {}, {}
+    nums, polys, aspects, xforms = {}, {}, {}, {}
     for idx, (stem, name) in enumerate(NAMES.items(), start=1):
-        h, l, w, ax = convert((ROOT / 'art' / f'{stem}.svg').read_text())
+        h, l, w, ax, meta = convert((ROOT / 'art' / f'{stem}.svg').read_text())
         art.append(f" '{name}':'{h}'")
         art2.append(f" '{name}':'{l}'")
         aw.append(f"'{name}':{w}")
@@ -166,11 +166,15 @@ def main():
         png = ROOT / 'art' / f'{stem}.png'
         if png.exists():
             out = STICKER_DIR / f'sticker-{idx}.png'
-            make_sticker(png, out, np, ndi, Image)
+            _, (x0, y0, x1, y1) = make_sticker(png, out, np, ndi, Image)
             poly, aspect = sticker_shape(out, np, Image)
             nums[name] = idx
             polys[name] = poly
             aspects[name] = aspect
+            # ART(u,v) → 贴纸归一化坐标：先回到原图，再按贴纸裁切框归一化
+            xforms[name] = [
+                round(1 / (meta['kx'] * (x1 - x0)), 6), round((meta['minx'] - x0) / (x1 - x0), 6),
+                round(1 / (meta['k'] * (y1 - y0)), 6), round((meta['miny'] - y0) / (y1 - y0), 6)]
             print(f'{name:<8} w={w:<4} 顶点x={ax:6.1f}  粗 {len(h):>6}  细 {len(l):>6}  贴纸 {out.name} {len(poly)}点')
         else:
             print(f'{name:<8} 跳过贴纸：缺 {png}')
@@ -184,6 +188,7 @@ def main():
                'const SHARE_STICKER_NUM=' + json.dumps(nums, ensure_ascii=False, separators=(',', ':')) + ';\n'
                'const SHARE_STICKER_POLY=' + json.dumps(polys, ensure_ascii=False, separators=(',', ':')) + ';\n'
                'const SHARE_STICKER_ASPECT=' + json.dumps(aspects, ensure_ascii=False, separators=(',', ':')) + ';\n'
+               'const SHARE_STICKER_XFORM=' + json.dumps(xforms, ensure_ascii=False, separators=(',', ':')) + ';\n'
                '/*STICKER-END*/\n')
 
     s = HTML.read_text(encoding='utf-8')
