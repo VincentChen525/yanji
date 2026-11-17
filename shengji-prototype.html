@@ -252,6 +252,8 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 #lkG{transform-origin:34px 24px;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
 @media (prefers-reduced-motion:reduce){.clip.go .gt,.clip.go .rp{animation-duration:.01s}}
 .ghostbtn{width:100%;margin-top:10px;height:46px;border-radius:23px;border:1px solid var(--ink);background:none;color:var(--ink);font-family:var(--serif);font-size:15px;cursor:pointer}
+.sharebtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:18px;border:1px solid var(--ink);background:none;color:var(--ink);font-family:var(--serif);font-size:13px;cursor:pointer;margin-top:2px}
+.sharebtn svg{display:block;width:14px;height:14px;flex:none;color:var(--muted)}
 .field{width:100%;margin-top:10px;height:46px;border-radius:12px;border:1px solid var(--hair);background:var(--paper);padding:0 14px;font-size:15px;color:var(--ink);font-family:var(--sans);outline:none}
 .field:focus{border-color:var(--ink)}
 .gymchip{margin-top:12px;border:1px solid var(--hair);background:var(--paper);border-radius:20px;padding:7px 14px;font-size:13px;color:var(--ink);cursor:pointer;font-family:var(--sans)}
@@ -645,10 +647,9 @@ function renderToday(){
      <div><b>${cs.length}</b><span>次攀爬</span></div>
    </div>
    ${A.length?`<div style="margin-top:8px">${A.map(o=>`<button class="rrow" data-rid="${o.id}" data-mode="${o.type==='b'?'':MODEG(o.mode)}"><span><b>${tape(o)}${esc(o.name)}</b><em>${meta(o)}</em></span><span class="gl">${o.cs.map(glyph).join('')}</span></button>`).join('')}</div>
-     <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--hair)">
-       <div class="sub">点一条线，看每次和回放。</div>
-       ${A.length?`<button class="link" data-share="day" style="display:block;text-align:left;margin:4px 0 0 -8px">${isToday?'分享今天':'分享 '+lab(d)}</button>`:''}
-       ${isToday&&cs.length?`<button class="link" id="undo" style="display:block;text-align:left;margin:2px 0 0 -8px">撤销上一次</button>`:''}
+     <div style="margin-top:14px">
+       ${isToday&&cs.length?`<button class="link" id="undo" style="display:block;text-align:left;margin:0 0 10px -8px">撤销上一次</button>`:''}
+       <button class="sharebtn" data-share="day"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5v8.5M5 4.5L8 1.5l3 3M2.5 7.5v6h11v-6"/></svg>${isToday?'分享今天':'分享 '+lab(d)}</button>
      </div>`:''}
    ${isToday&&hasDemo()?'<div class="demo"><span>示例数据</span><button class="link" id="wipe">清空，记自己的</button></div>':''}
 `;
