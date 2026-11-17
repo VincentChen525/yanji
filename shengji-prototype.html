@@ -162,6 +162,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .bookact:active{opacity:.6}
 /* 新建线：名字左边是颜色滚轮，右边是名字 */
 .namerow{display:flex;gap:10px;align-items:center;margin-top:8px}
+.colname{flex:none;width:24px;font-size:11px;line-height:1.1;color:var(--muted);font-family:var(--mono)}
 .colwheel{flex:none;width:66px;height:46px;position:relative;border:1px solid var(--hair);border-radius:12px;background:var(--paper);overflow:hidden;
   transition:border-color .18s ease,box-shadow .18s ease}
 .peek{position:absolute;left:13px;right:13px;height:2.5px;border-radius:2px;background:transparent;pointer-events:none;z-index:2;opacity:.5}
@@ -174,7 +175,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .colchip{height:34px;display:flex;align-items:center;justify-content:center;width:100%;border:none;background:none;cursor:pointer;
   scroll-snap-align:center;opacity:calc(.16 + .84*var(--k,0));transform:scale(calc(.84 + .16*var(--k,0)))}
 .colchip .tape{width:34px;height:13px;margin:0}
-.colchip.none{font-family:var(--serif);font-size:11px;color:var(--muted)}
+.colchip .originSwatch{width:34px;height:13px;border:1px solid var(--hair);border-radius:2px;background:repeating-linear-gradient(45deg,transparent 0 3px,rgba(31,29,25,.28) 3px 4px)}
 .nf .namerow .field{margin-top:0;flex:1;height:46px}
 .cwtip{display:none;margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)}
 /* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
@@ -1541,7 +1542,8 @@ function renderSheet(){
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
      <div class="lbl">名字</div>
      <div class="namerow">
-       <div class="colwheel" id="colwheel"><i class="peek pk-top" id="pkTop"></i><i class="peek pk-bot" id="pkBot"></i><div class="cw" id="cw"><button class="colchip none" data-v="">原色</button>${COLORKEYS.map(k=>`<button class="colchip" data-v="${k}">${tapeSvg(k,true)}</button>`).join('')}</div></div>
+       <div class="colwheel" id="colwheel"><i class="peek pk-top" id="pkTop"></i><i class="peek pk-bot" id="pkBot"></i><div class="cw" id="cw"><button class="colchip none" data-v=""><i class="originSwatch"></i></button>${COLORKEYS.map(k=>`<button class="colchip" data-v="${k}">${tapeSvg(k,true)}</button>`).join('')}</div></div>
+       <div class="colname" id="cwName">${draft.color||'原色'}</div>
        <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}">
      </div>
      <div class="cwtip" id="cwTip">先上下滚一下，选个颜色</div>`
@@ -1559,7 +1561,7 @@ function renderSheet(){
   if(cw){const chips=[...cw.children],H=34;
     const pick=()=>{const i=Math.max(0,Math.min(chips.length-1,Math.round(cw.scrollTop/H)));
       chips.forEach((b,j)=>b.style.setProperty('--k',Math.max(0,1-Math.abs(j-i)*0.6).toFixed(2)));
-      draft.color=chips[i].dataset.v||null;
+      draft.color=chips[i].dataset.v||null;const cname=$('cwName');if(cname)cname.textContent=draft.color||'原色';
       const colOf=b=>b?(b.dataset.v?TAPE[b.dataset.v]:'transparent'):'transparent';
       const pt=$('pkTop'),pb=$('pkBot');if(pt)pt.style.background=colOf(chips[i-1]);if(pb)pb.style.background=colOf(chips[i+1]);
       const tip=$('cwTip'),w=$('colwheel');if(tip)tip.style.display='none';if(w)w.classList.remove('need');
