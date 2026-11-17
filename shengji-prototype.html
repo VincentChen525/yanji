@@ -1843,7 +1843,7 @@ function shareDay(d){
   const insight=firstTxt+(top?'；'+top.k+' 段最多':'');
   const day7=new Date(d+'T00:00');day7.setDate(day7.getDate()-((day7.getDay()+6)%7));const from=iso(day7);
   const week=data.climbs.filter(c=>c.date>=from&&c.date<=d).length;
-  return{W:360,H:560,date:sWrapDay(d),gym:gyms,routes,climbs,m,sends,firsts,maxGrade:good[0]?good[0].grade:'—',families:fams,insight,week,total:data.climbs.length}
+  return{W:360,H:760,date:sWrapDay(d),gym:gyms,routes,climbs,m,sends,firsts,maxGrade:good[0]?good[0].grade:'—',families:fams,insight,week,total:data.climbs.length}
 }
 /* 一条线的数据 */
 function shareTape(){
@@ -1867,36 +1867,62 @@ function shareSticker(){
   const scrapLine=isAct?'今天也在爬 · '+sWrapDay(TODAY):done?(kind==='m'?'登顶过':'完成过')+' · '+sWrapDay(TODAY):cur>0?'停在这里 · '+sWrapDay(TODAY):(kind==='m'?'山高 ':'高 ')+fmt(target)+' m，从脚下开始';
   return{W:432,H:540,name:V,target,cur:Math.round(cur),left:Math.round(left),n,isAct,status,kind,unit,kindLabel,tapeLabel,stampTop,scrapLine,date:sWrapDay(TODAY),num:SHARE_STICKER_NUM[V]||17,poly:SHARE_STICKER_POLY[V],asp:SHARE_STICKER_ASPECT[V],xform:SHARE_STICKER_XFORM[V]}
 }
-/* 1 小票 */
+/* 1 小票：真实线路小图 + 台阶式级别分布 */
 function drawReceipt(ctx,D){
   const W=D.W,H=D.H;ctx.fillStyle=SHARE_PAPER;ctx.fillRect(0,0,W,H);sDots(ctx,0,0,W,H,18);
-  const x=26,y=20,w=308,h=500;
+  const x=26,y=20,w=308,h=720;
   ctx.save();ctx.shadowColor='rgba(31,29,25,.18)';ctx.shadowBlur=20;ctx.shadowOffsetY=8;sPaper(ctx,x,y,w,h,9);ctx.fillStyle='#FFFDF7';ctx.fill();ctx.restore();
-  sBrandCenter(ctx,W/2,y+24,24,SHARE_INK,SHARE_ACC,'#FFFDF7');
-  sText(ctx,D.date+(D.gym?' · '+D.gym:''),W/2,y+62,9,SHARE_MUTED,'center');
-  sDash(ctx,x+18,y+78,x+w-18,y+78,'#CFC8B8');
+  sBrandCenter(ctx,W/2,y+30,24,SHARE_INK,SHARE_ACC,'#FFFDF7');
+  sText(ctx,D.date+(D.gym?' · '+D.gym:''),W/2,y+66,9,SHARE_MUTED,'center');
+  sDash(ctx,x+18,y+82,x+w-18,y+82,'#CFC8B8');
   // 总量
-  sText(ctx,D.routes+' 条',x+22,y+116,23,SHARE_INK,'left',600);
-  sText(ctx,D.climbs+' 次',W/2+10,y+116,15,SHARE_MUTED,'center');
-  sText(ctx,D.m+' m',x+w-22,y+116,23,SHARE_INK,'right',600);
-  sText(ctx,'线路',x+22,y+134,9,SHARE_MUTED);sText(ctx,'攀爬',W/2+10,y+134,9,SHARE_MUTED,'center');sText(ctx,'爬升',x+w-22,y+134,9,SHARE_MUTED,'right');
+  sText(ctx,D.routes+' 条',x+22,y+118,23,SHARE_INK,'left',600);
+  sText(ctx,D.climbs+' 次',W/2+10,y+118,15,SHARE_MUTED,'center');
+  sText(ctx,D.m+' m',x+w-22,y+118,23,SHARE_INK,'right',600);
+  sText(ctx,'线路',x+22,y+136,9,SHARE_MUTED);sText(ctx,'攀爬',W/2+10,y+136,9,SHARE_MUTED,'center');sText(ctx,'爬升',x+w-22,y+136,9,SHARE_MUTED,'right');
   sDash(ctx,x+18,y+152,x+w-18,y+152,'#CFC8B8');
-  const sendTxt=(D.firsts?D.firsts+' 条一次过':D.sends?D.sends+' 条完攀':'还在磕');
   sText(ctx,'完攀 '+D.sends+' / '+D.routes,x+22,y+176,10,SHARE_MUTED);
   sText(ctx,'最高 '+D.maxGrade,x+w-22,y+176,10,SHARE_MUTED,'right');
-  sText(ctx,'级别分布',x+22,y+200,9,SHARE_MUTED);
-  // 柱状分布
-  const fams=D.families.slice(0,4),max=Math.max(1,...fams.map(f=>f.n)),base=y+270,bw=26,gap=42;
-  const start=x+w/2-(fams.length*bw+(fams.length-1)*(gap-bw))/2;
-  fams.forEach((f,i)=>{const bx=start+i*gap,bh=Math.max(6,46*f.n/max);const hi=f.n===max;ctx.fillStyle=hi?SHARE_ACC:SHARE_INK;sRound(ctx,bx,base-bh,bw,bh,3);ctx.fill();sText(ctx,f.k,bx+bw/2,base+14,8,SHARE_MUTED,'center');sText(ctx,f.n,bx+bw/2,base-bh-6,8,SHARE_MUTED,'center')});
+  // 今天真实线路小图
+  const cw=300,ch=cw*300/340,cy=y+190,cx=(W-cw)/2;
+  if(D.chartImg)ctx.drawImage(D.chartImg,cx,cy,cw,ch);
+  else{sDots(ctx,cx,cy,cw,ch,12);sText(ctx,'今天的线路',cx+cw/2,cy+ch/2,10,SHARE_MUTED,'center')}
+  // 台阶式级别分布
+  sText(ctx,'级别分布',x+22,y+486,9,SHARE_MUTED);
+  const steps=receiptGradeSteps(D.families||[]);
+  const left=x+22,sw=w-44,base=y+562,n=steps.length;
+  if(n){
+    const stepW=sw/n,rise=n>1?Math.min(24,(base-(y+496))/(n-1)):0;
+    const tread=i=>base-i*rise;
+    // 整段台阶用浅线
+    ctx.save();ctx.strokeStyle=SHARE_HAIR;ctx.lineWidth=1;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
+    ctx.moveTo(left,base);
+    for(let i=0;i<n;i++){const x1=left+(i+1)*stepW;ctx.lineTo(x1,tread(i));if(i<n-1)ctx.lineTo(x1,tread(i+1))}
+    ctx.stroke();ctx.restore();
+    // 有数据的区间加深
+    const occ=steps.map((st,i)=>st.n?i:-1).filter(i=>i>=0);
+    if(occ.length){const a=occ[0],b=occ[occ.length-1];ctx.save();ctx.strokeStyle=SHARE_INK;ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
+      ctx.moveTo(left+a*stepW,tread(a));
+      for(let i=a;i<=b;i++){const x1=left+(i+1)*stepW;ctx.lineTo(x1,tread(i));if(i<b)ctx.lineTo(x1,tread(i+1))}
+      ctx.stroke();ctx.restore()}
+    // 橙点放在台阶面上方；点太多时向上叠第二排
+    steps.forEach((st,i)=>{if(!st.n)return;const ty=tread(i);const maxPer=Math.max(1,Math.floor((stepW-8)/7));const rows=Math.ceil(st.n/maxPer);
+      for(let j=0;j<st.n;j++){const row=Math.floor(j/maxPer),col=j%maxPer,rowN=Math.min(maxPer,st.n-row*maxPer);
+        const px=left+i*stepW+stepW/2+(col-(rowN-1)/2)*7;
+        const py=ty-5.2-row*6.8;
+        ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fillStyle=SHARE_ACC;ctx.fill()}
+    });
+    // 级别标签
+    steps.forEach((st,i)=>{const px=left+i*stepW+stepW/2;sText(ctx,st.k,px,base+14,n>5?7.5:8,SHARE_MUTED,'center')});
+  }
   // 一句话
-  const iy=y+310;ctx.fillStyle='#F4EFDF';ctx.fillRect(x+18,iy,w-36,54);ctx.fillStyle=SHARE_ACC;ctx.fillRect(x+18,iy,2,54);
-  const lines=sWrap(ctx,D.insight,w-60).slice(0,2);lines.forEach((l,i)=>sText(ctx,l,x+30,iy+21+i*17,11,SHARE_INK));
-  sDash(ctx,x+18,y+382,x+w-18,y+382,'#CFC8B8');
-  sText(ctx,'本周累计攀爬 '+D.week+' 次线路',x+22,y+408,9,SHARE_MUTED);sText(ctx,'累计攀爬 '+D.total+' 次线路',x+w-22,y+408,9,SHARE_MUTED,'right');
+  const iy=y+586;ctx.fillStyle='#F4EFDF';ctx.fillRect(x+18,iy,w-36,40);ctx.fillStyle=SHARE_ACC;ctx.fillRect(x+18,iy,2,40);
+  const lines=sWrap(ctx,D.insight,w-56).slice(0,2);lines.forEach((l,i)=>sText(ctx,l,x+30,iy+21+i*16,11,SHARE_INK));
+  sDash(ctx,x+18,y+638,x+w-18,y+638,'#CFC8B8');
+  sText(ctx,'本周累计攀爬 '+D.week+' 次线路',x+22,y+658,9,SHARE_MUTED);sText(ctx,'累计攀爬 '+D.total+' 次线路',x+w-22,y+658,9,SHARE_MUTED,'right');
   // 条形码
-  ctx.save();ctx.globalAlpha=.8;for(let i=0,xx=x+30;xx<x+w-30;i++){const bw2=[1,2,1,3,1,2][i%6];ctx.fillStyle=SHARE_INK;ctx.fillRect(xx,y+428,bw2,18);xx+=bw2+3}ctx.restore();
-  sText(ctx,'谢谢攀爬 · 下次再来',W/2,y+470,9,SHARE_MUTED,'center');
+  ctx.save();ctx.globalAlpha=.8;for(let i=0,xx=x+30;xx<x+w-30;i++){const bw2=[1,2,1,3,1,2][i%6];ctx.fillStyle=SHARE_INK;ctx.fillRect(xx,y+670,bw2,16);xx+=bw2+3}ctx.restore();
+  sText(ctx,'谢谢攀爬 · 下次再来',W/2,y+712,9,SHARE_MUTED,'center');
 }
 /* 2 胶带条 */
 function drawTape(ctx,D){
@@ -1989,6 +2015,31 @@ async function drawSticker(ctx,D){
 }
 /* ---------- 打开 / 导出 ---------- */
 let shareKind=null,shareData=null;
+async function chartImage(A){
+  let svg=chart(A);
+  svg=svg.replace('width="100%"','width="680" height="600"');
+  const vars={'--ink':SHARE_INK,'--muted':SHARE_MUTED,'--card':'#FBF8F1','--paper':'#F4F0E6','--hair':SHARE_HAIR,'--accent':SHARE_ACC,'--sans':'-apple-system, sans-serif'};
+  svg=svg.replace(/var\((--[a-z-]+)\)/g,(m,k)=>vars[k]||m);
+  svg=svg.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');
+  const blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  try{
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+    return img;
+  } finally {URL.revokeObjectURL(url)}
+}
+function receiptGradeSteps(fams){
+  const list=fams.map(f=>({k:f.k,n:f.n}));
+  const num=k=>/^5\.(\d+)$/.test(k)?Number(k.slice(2)):null;
+  const mk=v=>'5.'+v;
+  if(list.length&&list.length<=4){
+    const lo=num(list[0].k),hi=num(list[list.length-1].k);
+    if(lo!=null)list.unshift({k:mk(lo-1),n:0});
+    if(hi!=null)list.push({k:mk(hi+1),n:0});
+  }
+  return list;
+}
 function shareCanvas(){return document.getElementById('shareCanvas')}
 function shareBuild(kind){
   if(kind==='day'){const d=viewDate||TODAY;return{kind,title:'分享今天的攀爬',data:shareDay(d),draw:drawReceipt}}
@@ -1998,8 +2049,9 @@ function shareBuild(kind){
 async function openShareInner(kind){
   const tok=++shareGen;const b=shareBuild(kind);if(!b||!b.data)return;
   shareKind=kind;shareData=b.data;
-  const cv=shareCanvas();const W=b.data.W,H=b.data.H;cv.width=W*2;cv.height=H*2;cv.style.width='320px';cv.style.height='auto';
+  const cv=shareCanvas();const W=b.data.W,H=b.data.H;cv.width=W*2;cv.height=H*2;cv.style.width=H>600?'280px':'320px';cv.style.height='auto';
   const ctx=cv.getContext('2d');ctx.setTransform(2,0,0,2,0,0);
+  if(kind==='day'){try{b.data.chartImg=await chartImage(aggs(viewDate||TODAY))}catch(e){console.warn('route chart image failed',e)}}
   document.getElementById('shareTitle').textContent=b.title;
   document.getElementById('shareTip').textContent=kind==='day'?'今天的攀爬小票 · 数字只写事实':kind==='route'?'这条线的胶带条 · 可以贴进本子里':'这张贴纸 · 暖纸磨砂底';
   document.getElementById('shareLayer').classList.add('on');document.getElementById('shareLayer').setAttribute('aria-hidden','false');
