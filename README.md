@@ -44,7 +44,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
 | `shengji-prototype.html` | 主文件（唯一准稿） |
 | `index.html` / `.nojekyll` | GitHub Pages 落地页 |
 | `fonts/lxgw-wenkai/` | 霞鹜文楷子集（SIL OFL 1.1） |
-| `art/` + `build_art.py` | 29 张地标 / 山峰线描源文件与转换脚本；同时生成 `brand/share/` 贴纸和分享卡剪影常量 |
+| `art/` + `build_art.py` | 29 张地标 / 山峰线描源文件与转换脚本；SVG 渲染后生成 `brand/share/` 贴纸、剪影和对齐常量 |
 | `产品文档.md` | 定位、口径、数据模型、改动记录 |
 | `docs/` | 界面截图、观景台站点清单 |
 | `social/` | 小红书配图与导出脚本 |

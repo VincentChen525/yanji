@@ -7,14 +7,18 @@
 3. shengji-prototype.html 里的 SHARE_STICKER_NUM / SHARE_STICKER_POLY / SHARE_STICKER_ASPECT /
    SHARE_STICKER_XFORM（分享卡按当前目标取贴纸、剪影，以及线稿对齐到剪影的变换；改 art 后重跑本脚本即可，不要手改这些常量）。
 
-依赖：Pillow、numpy、scipy（只用 ndimage 的膨胀/填洞/连通域）。
-贴纸是从 art/<stem>.png 的线稿抠剪影；新增一张图时，svg 和 png 都要放进 art/，再运行本脚本。
+依赖：Pillow、numpy、scipy（ndimage 的膨胀/填洞/连通域），以及本机 Chrome（把 SVG 栅格化）。
+贴纸直接从 art/<stem>.svg 渲染后抠剪影；art/*.png 只是旧素材，Chrome 不可用时才回退用它。
 用法：python3 build_art.py
 """
 import json
 import math
+import os
 import pathlib
 import re
+import shutil
+import subprocess
+import tempfile
 
 ROOT = pathlib.Path(__file__).parent
 HTML = ROOT / 'shengji-prototype.html'
@@ -60,6 +64,51 @@ def simplify(pts, tol):
 def num(v):
     s = f'{v:.1f}'
     return s[:-2] if s.endswith('.0') else s
+
+
+def find_chrome():
+    """找本机 Chrome/Chromium；找不到返回 None（会回退到 art/*.png）。"""
+    env = os.environ.get('CHROME')
+    cands = [env] if env else []
+    cands += [
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+    ]
+    for c in cands:
+        if c and pathlib.Path(c).exists():
+            return c
+    for name in ('google-chrome', 'chromium', 'chromium-browser'):
+        p = shutil.which(name)
+        if p:
+            return p
+    return None
+
+
+def svg_size(svg_text):
+    m = re.search(r'<svg[^>]*\bwidth="([\d.]+)"[^>]*\bheight="([\d.]+)"', svg_text)
+    if m:
+        return int(float(m.group(1))), int(float(m.group(2)))
+    m = re.search(r'<svg[^>]*\bviewBox="[\d.]+ [\d.]+ ([\d.]+) ([\d.]+)"', svg_text)
+    if m:
+        return int(float(m.group(1))), int(float(m.group(2)))
+    raise ValueError('SVG 没有 width/height 或 viewBox')
+
+
+def render_svg(svg_path, out_path, chrome):
+    """用 Chrome headless 把 SVG 按原宽高渲染成白底 PNG（和 art/*.png 同一坐标系）。"""
+    w, h = svg_size(svg_path.read_text())
+    profile = tempfile.mkdtemp(prefix='yanji-svg-')
+    cmd = [chrome, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--no-default-browser-check',
+           f'--user-data-dir={profile}', f'--screenshot={out_path}', f'--window-size={w},{h}',
+           '--default-background-color=FFFFFFFF', svg_path.as_uri()]
+    try:
+        subprocess.run(cmd, check=True, timeout=60, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    finally:
+        shutil.rmtree(profile, ignore_errors=True)
+    if not out_path.exists():
+        raise RuntimeError('Chrome 没有生成截图')
+    return out_path
 
 
 def convert(svg):
@@ -155,6 +204,8 @@ def main():
         raise SystemExit(f'需要 Pillow / numpy / scipy 才能生成贴纸：{e}')
 
     STICKER_DIR.mkdir(parents=True, exist_ok=True)
+    chrome = find_chrome()
+    render_dir = pathlib.Path(tempfile.mkdtemp(prefix='yanji-render-'))
     art, art2, aw, axs = [], [], [], []
     nums, polys, aspects, xforms = {}, {}, {}, {}
     for idx, (stem, name) in enumerate(NAMES.items(), start=1):
@@ -163,7 +214,15 @@ def main():
         art2.append(f" '{name}':'{l}'")
         aw.append(f"'{name}':{w}")
         axs.append(f"'{name}':{num(ax)}")
-        png = ROOT / 'art' / f'{stem}.png'
+        svg_path = ROOT / 'art' / f'{stem}.svg'
+        png = None
+        if chrome:
+            try:
+                png = render_svg(svg_path, render_dir / f'{stem}.png', chrome)
+            except Exception as e:
+                print(f'  Chrome 渲染失败，回退 art/*.png：{e}')
+        if png is None:
+            png = ROOT / 'art' / f'{stem}.png'
         if png.exists():
             out = STICKER_DIR / f'sticker-{idx}.png'
             _, (x0, y0, x1, y1) = make_sticker(png, out, np, ndi, Image)
@@ -204,6 +263,7 @@ def main():
         k = s.index('/* ---------- 分享卡')
         s = s[:k] + sticker + '\n' + s[k:]
     HTML.write_text(s, encoding='utf-8')
+    shutil.rmtree(render_dir, ignore_errors=True)
     print('写入 ART', len(block), '字符；STICKER', len(sticker), '字符；贴纸', len(nums), '张')
 
 
