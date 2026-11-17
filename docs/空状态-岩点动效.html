@@ -1,0 +1,62 @@
+<!doctype html><meta charset="utf-8">
+<link rel="stylesheet" href="../fonts/lxgw-wenkai/lxgw-wenkai.css">
+<style>
+:root{--paper:#F4F0E6;--card:#FBF8F1;--ink:#1F1D19;--muted:#726C5F;--hair:#D8D1C1;--accent:#E2552B}
+*{box-sizing:border-box}
+body{margin:0;background:#E9E2D3;font-family:"LXGW WenKai",serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{width:372px;padding:16px;border-radius:16px;background:var(--card);box-shadow:0 20px 40px rgba(31,29,25,.12)}
+svg{display:block;width:100%;height:auto}
+.h1,.h2,.h3,.h4,.h5{transform-box:fill-box;transform-origin:50% 50%;animation:6s cubic-bezier(.2,.8,.2,1) infinite}
+.h1{animation-name:eh1}.h2{animation-name:eh2}.h3{animation-name:eh3}.h4{animation-name:eh4}.h5{animation-name:eh5}
+.line{stroke-dasharray:1;animation:edraw 6s cubic-bezier(.35,.1,.25,1) infinite}
+.dot{transform-box:fill-box;transform-origin:50% 50%;animation:edot 6s cubic-bezier(.2,.8,.2,1) infinite}
+.wall{animation:ewall 6s linear infinite}
+@keyframes eh1{0%,5%{opacity:0;transform:scale(.82)}12%,70%{opacity:1;transform:scale(1)}82%,100%{opacity:0;transform:scale(.94)}}
+@keyframes eh2{0%,8%{opacity:0;transform:scale(.82)}15%,70%{opacity:1;transform:scale(1)}82%,100%{opacity:0;transform:scale(.94)}}
+@keyframes eh3{0%,11%{opacity:0;transform:scale(.82)}18%,70%{opacity:1;transform:scale(1)}82%,100%{opacity:0;transform:scale(.94)}}
+@keyframes eh4{0%,14%{opacity:0;transform:scale(.82)}21%,70%{opacity:1;transform:scale(1)}82%,100%{opacity:0;transform:scale(.94)}}
+@keyframes eh5{0%,17%{opacity:0;transform:scale(.82)}24%,70%{opacity:1;transform:scale(1)}82%,100%{opacity:0;transform:scale(.94)}}
+@keyframes edraw{0%,24%{stroke-dashoffset:1;opacity:1}52%,70%{stroke-dashoffset:0;opacity:1}82%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes edot{0%,50%{opacity:0;transform:scale(.55)}55%,70%{opacity:1;transform:scale(1)}82%,100%{opacity:0;transform:scale(.9)}}
+@keyframes ewall{0%,3%{opacity:0}9%,100%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.h1,.h2,.h3,.h4,.h5,.line,.dot,.wall{animation:none}.h1,.h2,.h3,.h4,.h5{opacity:1}.line{stroke-dashoffset:0;opacity:1}.dot{opacity:1}.wall{opacity:1}}
+</style>
+<div class="card" id="card">
+<svg viewBox="0 0 340 300" aria-label="还没有线，去爬第一条">
+  <g class="wall" fill="#D8D1C1" opacity=".55"><g id="dots"></g></g>
+  <line x1="8" y1="260" x2="332" y2="260" stroke="#1F1D19" stroke-width="1.1"/>
+  <path class="line" pathLength="1" d="M104 258C109 252.3 135.3 235.3 134 224C132.7 212.7 93.3 201 96 190C98.7 179 147.7 170.3 150 158C152.3 145.7 104.7 127.3 110 116C115.3 104.7 165 99.3 182 90C199 80.7 207 65 212 60" fill="none" stroke="#1F1D19" stroke-width="2" stroke-linecap="round"/>
+  <!-- 宽缝 / sloper -->
+  <g transform="translate(134 224)"><g class="h1">
+    <path d="M-13 -7C-5 -13 6 -12 12 -5C16 1 14 9 7 12C-1 15 -9 12 -13 6C-16 1 -16 -4 -13 -7Z" fill="#FBF8F1" stroke="#1F1D19" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M-8 -1C-2 -6 5 -6 10 -2" fill="none" stroke="#1F1D19" stroke-width=".8" opacity=".55"/>
+  </g></g>
+  <!-- 口袋 -->
+  <g transform="translate(96 190)"><g class="h2">
+    <path d="M-10 -9C-2 -14 8 -11 12 -3C15 4 11 11 3 13C-5 15 -13 9 -13 2C-13 -3 -12 -6 -10 -9Z" fill="#FBF8F1" stroke="#1F1D19" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M-4 -2C-1 -4 3 -4 5 -1" fill="none" stroke="#1F1D19" stroke-width=".8" opacity=".55"/>
+  </g></g>
+  <!-- 月牙 / crimp -->
+  <g transform="translate(150 158) rotate(-10)"><g class="h3">
+    <path d="M-13 3C-9 -6 2 -10 10 -4C12 -3 13 -1 13 2C8 -1 2 -1 -3 2C-7 4 -11 7 -13 11Z" fill="#FBF8F1" stroke="#1F1D19" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M-7 5C-2 2 4 2 8 4" fill="none" stroke="#1F1D19" stroke-width=".8" opacity=".55"/>
+  </g></g>
+  <!-- 三角 / 斜面 -->
+  <g transform="translate(110 116) rotate(14)"><g class="h4">
+    <path d="M-11 7L-5 -8L10 -10L13 2L5 11Z" fill="#FBF8F1" stroke="#1F1D19" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M-5 -2C0 -5 6 -5 9 -1" fill="none" stroke="#1F1D19" stroke-width=".8" opacity=".55"/>
+  </g></g>
+  <!-- 小点 -->
+  <g transform="translate(182 90)"><g class="h5">
+    <path d="M-7 -8C-2 -11 5 -10 8 -5C11 0 9 7 4 9C-2 12 -8 8 -9 2C-10 -2 -9 -5 -7 -8Z" fill="#FBF8F1" stroke="#1F1D19" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M-3 0C0 -2 3 -2 5 0" fill="none" stroke="#1F1D19" stroke-width=".8" opacity=".55"/>
+  </g></g>
+  <circle class="dot" cx="212" cy="60" r="5.2" fill="#E2552B"/>
+  <text x="170" y="286" text-anchor="middle" font-size="12" fill="#726C5F">还没有线，去爬第一条</text>
+</svg>
+</div>
+<script>
+const dots=[...Array(19*13)].map((_,i)=>{const x=16+(i%19)*17,y=24+Math.floor(i/19)*17;return `<circle cx="${x}" cy="${y}" r="1.25"/>`}).join('');
+document.getElementById('dots').innerHTML=dots;
+window.ready=true;
+</script>
