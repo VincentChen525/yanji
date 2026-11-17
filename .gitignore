@@ -4,3 +4,9 @@
 # 本地并行副本与本地配置，不进公开仓库
 shengji-prototype_claude版本.html
 .claude/
+
+# 计划/账号/备案类文档：仓库是公开的（GitHub Pages），这些只留本地
+docs/private/
+
+# 微信小程序头像（本地资产，不进公开仓库）
+brand/wechat/
