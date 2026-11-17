@@ -160,22 +160,32 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .bookrow .bookopen em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bookact{flex:none;border:1px solid var(--hair);background:none;border-radius:14px;padding:5px 11px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}
 .bookact:active{opacity:.6}
-/* 拆线动画：电动螺丝刀把岩点上的螺丝拧下来 */
-.stripwrap{text-align:center}
-.strip-hint{font-size:12px;color:var(--muted);margin-top:4px}
+/* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
+.stripLayer{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:26px;
+  background:rgba(244,240,230,.55);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  opacity:0;pointer-events:none;transition:opacity .22s ease}
+.stripLayer.on{opacity:1;pointer-events:auto}
+.stripCard{width:100%;max-width:332px;background:var(--card);border-radius:22px;padding:14px 16px 16px;
+  box-shadow:0 18px 50px rgba(40,35,25,.18);text-align:center;transform:translateY(8px) scale(.98);
+  transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.stripLayer.on .stripCard{transform:none}
+.strip-hint{font-size:12px;color:var(--muted);margin-top:2px}
 .strip-done{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--accent);margin-top:2px;opacity:0}
+.stripCard .link{margin-top:6px}
 #stBolt,#stHold{transform-box:fill-box;transform-origin:center}
-#stToolWrap{transform:translate(110px,0)}
-.stripgo #stToolWrap{animation:stToolIn .2s cubic-bezier(.2,.8,.2,1) .05s both,stToolOut .18s ease-in .7s both}
-.stripgo #stBolt{animation:stBolt .46s linear .24s both}
-.stripgo #stSpin{animation:stSpinA .46s linear .24s both}
-.stripgo #stHold{animation:stHoldFall .52s cubic-bezier(.5,.05,.9,.5) .76s both}
-.stripgo #stripDone{animation:stDone .28s ease-out 1.12s both}
-@keyframes stToolIn{from{transform:translate(110px,0)}to{transform:translate(0,0)}}
-@keyframes stToolOut{from{transform:translate(0,0)}to{transform:translate(112px,0)}}
-@keyframes stBolt{0%{transform:rotate(0);opacity:1}55%{transform:translate(7px,1px) rotate(720deg);opacity:1}100%{transform:translate(15px,-3px) rotate(900deg);opacity:0}}
-@keyframes stSpinA{0%,100%{opacity:0}20%,65%{opacity:.9}}
-@keyframes stHoldFall{0%{transform:translate(0,0) rotate(0)}18%{transform:translate(1px,-3px) rotate(-1.5deg)}100%{transform:translate(30px,170px) rotate(16deg)}}
+#stToolWrap{transform:translate(200px,0)}
+.stripgo #stToolWrap{animation:stToolIn .3s cubic-bezier(.2,.8,.2,1) .12s both,stToolOut .7s ease-in 1.6s both}
+.stripgo #stBolt{animation:stBoltSpin 1s cubic-bezier(.4,0,.6,1) .5s both}
+.stripgo #stSpin{animation:stSpinA 1s linear .5s both}
+.stripgo #stBitScrew{animation:stScrewOn .14s linear 1.57s both}
+.stripgo #stHold{animation:stHoldFall .95s cubic-bezier(.5,.05,.9,.5) 1.95s both}
+.stripgo #stripDone{animation:stDone .3s ease-out 2.75s both}
+@keyframes stToolIn{from{transform:translate(200px,0)}to{transform:translate(0,0)}}
+@keyframes stToolOut{from{transform:translate(0,0)}to{transform:translate(200px,0)}}
+@keyframes stBoltSpin{0%{transform:rotate(0);opacity:1}85%{transform:translate(7px,0) rotate(1080deg);opacity:1}100%{transform:translate(9px,0) rotate(1080deg);opacity:0}}
+@keyframes stSpinA{0%,100%{opacity:0}12%,88%{opacity:.9}}
+@keyframes stScrewOn{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
+@keyframes stHoldFall{0%{transform:none;opacity:1}16%{transform:translate(1px,-4px) rotate(-1.2deg);opacity:1}30%{transform:translate(2px,0) rotate(0);opacity:1}100%{transform:translate(26px,150px) rotate(12deg);opacity:0}}
 @keyframes stDone{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 nav{position:absolute;left:0;right:0;bottom:0;display:flex;background:linear-gradient(to top,var(--paper) 72%,transparent);padding:26px 18px calc(22px + env(safe-area-inset-bottom))}
 nav button{flex:1;background:none;border:none;font-family:var(--serif);font-size:15px;color:var(--muted);padding:8px 0;cursor:pointer;position:relative}
@@ -328,6 +338,7 @@ button:active:not(:disabled),label.ghostbtn:active{opacity:.6}
   </nav>
   <div class="veil" id="veil"></div>
   <div class="sheet" id="sheet"></div>
+  <div class="stripLayer" id="stripLayer"></div>
 </div>
 
 <script>
@@ -667,24 +678,77 @@ function restoreRoute(r){const t=twinOf(r);
     yes:'合并成一条',no:'改个名再装回去',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()},onNo:()=>renameAsk(r,true)});return}
   r.retired=false;persist();
   if(mode==='routes')renderSheet();else{mode='pick';closeSheet();renderAll()}}
-/* ---------- 拆线：拿电动螺丝刀把岩点上的螺丝拧下来 ---------- */
-let stripRid=null,stripBack=null,stripTimer=null;
+/* ---------- 拆线：全屏居中层 + 电动螺丝刀把岩点上的 M10 螺丝拧下来（螺丝带磁，被批头吸走） ---------- */
+let stripRid=null,stripBack=null,stripTimer=null,stripVib=null;
 function startStrip(rid,back){
   stripRid=rid;stripBack=back||null;
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){finishStrip();return}
-  mode='strip';renderSheet();phone.classList.add('open');
+  const r=R(rid),layer=$('stripLayer');
+  layer.innerHTML=`<div class="stripCard" id="stripwrap">
+    <div class="row"><div class="eyebrow">拆线</div><span></span></div>
+    <svg viewBox="0 0 320 214" width="100%" style="display:block" fill="none" stroke="var(--ink)" stroke-linecap="round" stroke-linejoin="round">
+      <defs><pattern id="stripDots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r=".8" fill="var(--hair)" stroke="none"/></pattern></defs>
+      <rect width="320" height="214" fill="url(#stripDots)" stroke="none"/>
+      <g id="stSocket"><circle cx="130.8" cy="48.3" r="9.5" stroke="var(--muted)" stroke-width="1.2" opacity=".8"/><circle cx="130.8" cy="48.3" r="5" stroke="var(--muted)" stroke-width="1" opacity=".7"/></g>
+      <g id="stHold">
+        <path d="M89.2 34.1C95.3 31.3 104.7 30.6 111.6 31.2C118.5 31.9 124.4 35.1 130.8 38.0C137.2 40.9 144.1 44.6 150.0 48.3C155.9 52.0 160.4 56.0 166.0 60.2C171.6 64.4 180.0 69.3 183.6 73.5C187.2 77.7 188.6 80.1 187.8 85.3C187.0 90.5 183.0 97.9 178.8 104.6C174.6 111.3 168.1 118.9 162.8 125.3C157.5 131.7 152.1 137.6 146.8 143.0C141.5 148.4 136.1 153.1 130.8 157.8C125.5 162.5 120.1 167.7 114.8 171.1C109.5 174.5 104.4 178.5 98.8 178.5C93.2 178.5 85.5 175.0 81.2 171.1C76.9 167.2 75.2 161.1 73.2 154.9C71.2 148.7 70.2 141.5 69.4 134.1C68.6 126.7 68.3 118.4 68.4 110.5C68.5 102.6 69.5 94.2 70.0 86.8C70.5 79.4 70.8 72.5 71.6 66.1C72.4 59.7 71.9 53.6 74.8 48.3C77.7 43.0 83.1 37.0 89.2 34.1Z" fill="var(--paper)" stroke-width="1.7"/>
+        <path d="M92.7 42.1C98.1 39.6 106.3 39.0 112.4 39.6C118.5 40.2 123.6 43.1 129.3 45.6C134.9 48.1 141.0 51.4 146.2 54.6C151.3 57.9 155.3 61.4 160.2 65.1C165.2 68.8 172.5 73.1 175.7 76.8C178.9 80.5 180.1 82.6 179.4 87.2C178.7 91.8 175.2 98.3 171.5 104.2C167.8 110.1 162.1 116.8 157.4 122.4C152.7 128.0 148.0 133.2 143.3 138.0C138.7 142.7 134.0 146.9 129.3 151.0C124.6 155.1 119.9 159.7 115.2 162.7C110.5 165.7 106.0 169.2 101.1 169.2C96.2 169.2 89.4 166.2 85.6 162.7C81.9 159.2 80.3 153.9 78.6 148.4C76.8 143.0 75.9 136.7 75.2 130.1C74.5 123.6 74.3 116.3 74.4 109.4C74.4 102.4 75.3 95.0 75.8 88.5C76.2 82.0 76.5 76.0 77.2 70.3C77.9 64.7 77.4 59.3 80.0 54.6C82.6 49.9 87.3 44.7 92.7 42.1Z" stroke="var(--muted)" stroke-width="1" opacity=".45"/>
+        <circle cx="100.5" cy="72" r=".9" fill="var(--muted)" stroke="none" opacity=".55"/>
+        <circle cx="116" cy="96" r=".9" fill="var(--muted)" stroke="none" opacity=".55"/>
+        <circle cx="99" cy="118" r=".9" fill="var(--muted)" stroke="none" opacity=".5"/>
+        <circle cx="130.8" cy="48.3" r="13" stroke-width="1.1" opacity=".55"/>
+        <circle cx="111" cy="140.1" r="3.4" stroke-width="1.1" opacity=".5"/>
+      </g>
+      <g id="stBolt">
+        <circle cx="130.8" cy="48.3" r="8.5" fill="var(--card)" stroke-width="1.4"/>
+        <path d="M130.8 43.8l3.9 2.25v4.5l-3.9 2.25-3.9-2.25v-4.5z" fill="var(--ink)" stroke="none"/>
+      </g>
+      <g id="stSpin" opacity="0">
+        <path d="M146.8 35.3a20 20 0 0 1 5 12" stroke-width="1.2"/>
+        <path d="M114.8 61.3a20 20 0 0 1-5-12" stroke-width="1.2"/>
+        <path d="M138.8 65.3a20 20 0 0 1-8 3" stroke-width="1.2"/>
+        <path d="M122.8 31.3a20 20 0 0 1 8-3" stroke-width="1.2"/>
+      </g>
+      <g id="stToolWrap"><g transform="translate(194 48) rotate(-6)">
+        <path d="M-54-1.7l7 1.7-7 1.7z" fill="var(--ink)" stroke="none"/>
+        <rect x="-50" y="-3.2" width="13" height="6.4" rx="1.2" stroke-width="1.2" fill="var(--card)"/>
+        <rect x="-38" y="-7" width="12" height="14" rx="2.2" stroke-width="1.4" fill="var(--card)"/>
+        <path d="M-34-7v14M-30-7v14" stroke-width=".8" opacity=".5"/>
+        <rect x="-26" y="-15" width="80" height="30" rx="14" stroke-width="1.7" fill="var(--card)"/>
+        <path d="M-10-15v30M0-15v30" stroke-width=".8" opacity=".38"/>
+        <path d="M54-6.5c3 2.2 4.2 4.4 4.2 6.5S57 10.3 54 12.5" stroke-width="1.1" opacity=".5"/>
+        <path d="M6 15h20l4 32H6z" fill="var(--paper)" stroke-width="1.4"/>
+        <rect x="8" y="47" width="24" height="10" rx="3" fill="var(--paper)" stroke-width="1.3"/>
+        <path d="M4 15h3" stroke-width="1.6"/>
+        <g id="stBitScrew" opacity="0">
+          <circle cx="-63.2" cy="0" r="5" fill="var(--card)" stroke-width="1.2"/>
+          <path d="M-67.8-3l-4.2 1.4M-67.8 0h-5.4M-67.8 3l-4.2-1.4" stroke-width="1"/>
+        </g>
+      </g></g>
+    </svg>
+    <div class="strip-hint">${r?esc(r.name)+' · ':''}把岩点上的螺丝拧下来</div>
+    <div class="strip-done" id="stripDone">已拆线</div>
+    <button class="link" id="stripCancel">取消</button>
+  </div>`;
+  layer.classList.add('on');
   requestAnimationFrame(()=>{const w=$('stripwrap');if(w)w.classList.add('stripgo')});
-  clearTimeout(stripTimer);stripTimer=setTimeout(finishStrip,1650);
+  clearTimeout(stripTimer);clearTimeout(stripVib);
+  stripVib=setTimeout(()=>{if(navigator.vibrate)navigator.vibrate(8)},1600);
+  stripTimer=setTimeout(finishStrip,3250);
 }
-function cancelStrip(){if(!stripRid)return false;clearTimeout(stripTimer);stripRid=null;stripBack=null;stripTimer=null;mode='pick';return true}
+function cancelStrip(){if(!stripRid)return false;
+  clearTimeout(stripTimer);clearTimeout(stripVib);stripRid=null;stripBack=null;stripTimer=null;stripVib=null;
+  const layer=$('stripLayer');if(layer)layer.classList.remove('on');return true}
 function finishStrip(){
   if(!stripRid)return;
-  const r=R(stripRid),back=stripBack;stripRid=null;stripBack=null;stripTimer=null;
+  const r=R(stripRid),back=stripBack;stripRid=null;stripBack=null;stripTimer=null;clearTimeout(stripVib);
+  const layer=$('stripLayer');if(layer)layer.classList.remove('on');
   if(r){r.retired=true;persist()}
   if(navigator.vibrate)navigator.vibrate(12);
   if(back==='routes'){mode='routes';renderSheet()}
-  else{mode='pick';closeSheet();renderAll()}
+  else{mode='pick';renderAll()}
 }
+$('stripLayer').onclick=e=>{if(e.target.closest('#stripCancel')||e.target===$('stripLayer'))cancelStrip()};
 $('p-route').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=R(curRid);
   if(b.id==='rback')go(backTo);
   else if(b.dataset.rs!==undefined){routeSel=b.dataset.rs||null;renderRoute()}
@@ -1304,94 +1368,6 @@ function renderSheet(){
       <div id="bookList">${bookListHtml()}</div>`;
     const q=$('bookQ');if(q)q.oninput=e=>{routeBookQ=e.target.value;const bl=$('bookList');if(bl)bl.innerHTML=bookListHtml()};
     return}
-  if(mode==='strip'){const r=R(stripRid);
-    el.innerHTML=`<div class="stripwrap" id="stripwrap">
-      <div class="row"><div class="eyebrow">拆线</div><button class="link" id="stripCancel">取消</button></div>
-      <svg viewBox="0 0 320 200" width="100%" style="display:block;margin-top:4px" fill="none" stroke="var(--ink)" stroke-linecap="round" stroke-linejoin="round">
-        <defs><pattern id="stripDots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r=".8" fill="var(--hair)" stroke="none"/></pattern></defs>
-        <rect width="320" height="200" fill="url(#stripDots)" stroke="none"/>
-        <g id="stHold">
-          <path d="M124 75c9-7 22-8 32-2 11 7 16 20 13 31-3 13-16 22-29 21-12-1-22-9-25-20-3-11 0-22 9-30z" fill="var(--card)" stroke-width="1.7"/>
-          <path d="M137 89c4-4 9-6 15-5M135 98c6-5 13-7 20-5" stroke-width="1" opacity=".45"/>
-          <circle cx="150" cy="104" r="6.2" stroke-width="1.1" opacity=".4"/>
-        </g>
-        <g id="stBolt"><circle cx="150" cy="104" r="13" fill="var(--card)" stroke-width="1.5"/>
-          <path d="M150 95.6l7.2 4.2v8.4l-7.2 4.2-7.2-4.2v-8.4z" stroke-width="1.3"/>
-          <circle cx="150" cy="104" r="3.2" stroke-width="1.1" opacity=".5"/></g>
-        <g id="stSpin" opacity="0">
-          <path d="M172 95a24 24 0 0 1 4 13" stroke-width="1.3"/>
-          <path d="M128 113a24 24 0 0 1-4-13" stroke-width="1.3"/>
-          <path d="M164 122a24 24 0 0 1-9 3" stroke-width="1.3"/>
-          <path d="M136 86a24 24 0 0 1 9-3" stroke-width="1.3"/>
-        </g>
-        <g id="stToolWrap"><g transform="translate(218 104) rotate(-6)">
-          <path d="M-54-1.7l7 1.7-7 1.7z" fill="var(--ink)" stroke="none"/>
-          <rect x="-50" y="-3.2" width="13" height="6.4" rx="1.2" stroke-width="1.2" fill="var(--card)"/>
-          <rect x="-38" y="-7" width="12" height="14" rx="2.2" stroke-width="1.4" fill="var(--card)"/>
-          <path d="M-34-7v14M-30-7v14" stroke-width=".8" opacity=".5"/>
-          <rect x="-26" y="-15" width="80" height="30" rx="14" stroke-width="1.7" fill="var(--paper)"/>
-          <path d="M-10-15v30M0-15v30" stroke-width=".8" opacity=".38"/>
-          <path d="M-20-15c4-2.4 7-3.4 11-3.4M-20 15c4 2.4 7 3.4 11 3.4" stroke-width="1" opacity=".35"/>
-          <path d="M54-6.5c3 2.2 4.2 4.4 4.2 6.5S57 10.3 54 12.5" stroke-width="1.1" opacity=".5"/>
-          <path d="M6 15h20l4 32H6z" fill="var(--card)" stroke-width="1.4"/>
-          <rect x="8" y="47" width="24" height="10" rx="3" fill="var(--paper)" stroke-width="1.3"/>
-          <path d="M4 15h3" stroke-width="1.6"/>
-        </g></g>
-      </svg>
-      <div class="strip-hint">${r?esc(r.name)+' · ':''}把岩点上的螺丝拧下来</div>
-      <div class="strip-done" id="stripDone">已拆线</div>
-    </div>`;
-    return}
-  if(mode==='set'){el.innerHTML=`
-    <div class="row"><div class="eyebrow">设置</div><button class="link" id="close">完成</button></div>
-    <div class="lbl">岩馆</div>
-    <button class="ghostbtn" id="gymBtn">${data.gym?esc(data.gym)+' · 切换或添加':'添加岩馆'}</button>
-    <div class="lbl">线路</div>
-    <button class="ghostbtn" id="openBook">线路簿 · 拆线 / 装回去</button>
-    <div class="lbl">备份</div>
-    <div class="two"><button class="ghostbtn" id="bkFile">存成文件</button><button class="ghostbtn" id="backup">复制成文字</button></div>
-    <div class="lbl">恢复</div>
-    <div class="two"><button class="ghostbtn" id="rsFile">从文件恢复</button><button class="ghostbtn" id="restore">粘贴文字恢复</button></div>
-    <input type="file" id="rsIn" accept=".json,application/json,text/plain" style="display:none">
-    <div class="sub" style="margin-top:8px">记录只存在这台设备的浏览器里。换手机或清浏览器数据之前，先备份一份，存到"文件"或发给自己。${data.bk?'上次备份：'+lab(data.bk)+'。':'还没有备份过。'}</div>
-    ${hasDemo()?'<div style="margin-top:14px;text-align:center"><button class="link" id="wipe2">清空示例数据</button></div>':''}`;return}
-  if(mode==='ask'){const a=askCfg;el.innerHTML=`
-    <div class="eyebrow">${a.title}</div>
-    <div style="margin-top:12px;font-size:14px;line-height:1.75">${a.body}</div>
-    ${a.input==null?'':a.area?`<textarea class="field" id="askIn" style="height:120px;padding:10px 14px;resize:none">${esc(a.input)}</textarea>`:`<input class="field" id="askIn" maxlength="24" value="${esc(a.input)}">`}
-    <div class="sub" id="askErr" style="color:var(--ink);min-height:20px;margin-top:6px"></div>
-    ${a.lock?`<div class="lock" id="lock">${lockSvg(a.yes)}</div><div class="sub" style="text-align:center">按住黑色锁套，往左拧开</div><button class="ghostbtn" id="askNo">${a.no||'取消'}</button>`
-      :`<div class="two"><button class="ghostbtn" id="askNo">${a.no||'取消'}</button><button class="save" id="askYes">${a.yes||'确定'}</button></div>`}`;bindLock();return}
-  if(mode==='gymf'){const gy=data.gyms.map(g=>{const cs=data.climbs.filter(c=>R(c.rid).gym===g.name);return{n:g.name,c:cs.length,d:new Set(cs.map(c=>c.date)).size,m:meters(cs)}}).filter(g=>g.c).sort((a,b)=>b.m-a.m);
-    el.innerHTML=`<div class="row"><div class="eyebrow">只看哪家岩馆</div><button class="link" id="close">取消</button></div>
-     <div class="gfl"><button data-gf="" class="${gymSel?'':'on'}"><span>全部岩馆</span><em>${dates().length} 天 · ${data.climbs.length} 次</em></button>
-       ${gy.map(g=>`<button data-gf="${esc(g.n)}" class="${g.n===gymSel?'on':''}"><span>${esc(g.n)}</span><em>${g.d} 天 · ${g.c} 次 · ${fmt(g.m)} m</em></button>`).join('')}</div>`;return}
-  if(mode==='ai'){const A=data.ai||(data.ai={goal:'',limit:''}),has=t=>(A.goal||'').split('、').includes(t);
-    el.innerHTML=`<div class="row"><div class="eyebrow">交给 AI 复盘</div><button class="link" id="close">关闭</button></div>
-     <div class="lbl">这个周期想要什么（可不填）</div>
-     <div class="aichips">${aiGoals().map(t=>`<button data-goal="${esc(t)}" class="${has(t)?'on':''}">${esc(t)}</button>`).join('')}</div>
-     <input class="field" id="aiGoal" placeholder="点上面的，或者自己写" maxlength="60" value="${esc(A.goal||'')}">
-     <div class="lbl">伤病或限制（可不填）</div>
-     <input class="field" id="aiLimit" placeholder="比如 左手中指滑车有伤，不能抠小点" maxlength="60" value="${esc(A.limit||'')}">
-     <div class="aipre" id="aiPre">${esc(aiText())}</div>
-     <button class="save" id="aiCopy">复制，去粘贴给 AI</button>
-     <div class="sub" style="margin-top:10px">范围跟着迹页顶上选的周期和岩馆走。发出去的只有上面这段统计，没有逐条记录。</div>`;
-    const up=()=>{persist();$('aiPre').textContent=aiText()};
-    $('aiGoal').oninput=e=>{A.goal=e.target.value;up();el.querySelectorAll('[data-goal]').forEach(x=>x.classList.toggle('on',has(x.dataset.goal)))};
-    $('aiLimit').oninput=e=>{A.limit=e.target.value;up()};return}
-  if(mode==='gym'){el.innerHTML=`
-    <div class="row"><div class="eyebrow">今天在哪家岩馆</div><button class="link" id="close">取消</button></div>
-    ${data.gyms.length?`<div class="seg col">${data.gyms.map((g,i)=>`<button data-gym="${i}" class="${g.name===data.gym?'on':''}">${esc(g.name)}</button>`).join('')}</div>`:'<div class="sub" style="margin-top:12px">先告诉我岩馆的名字，线路会按岩馆分开存。</div>'}
-    <input class="field" id="gymName" placeholder="新岩馆的名字" maxlength="20">
-    <button class="ghostbtn" id="gymAdd">添加并切换到它</button>`;return}
-  if(mode==='draw'){el.innerHTML=`
-    <div class="row"><div class="eyebrow">画出这条线的走向</div><button class="link" id="drawBack">返回</button></div>
-    <div class="pad" id="pad"${padPhoto?` style="background:var(--paper) url(${padPhoto}) center/cover no-repeat"`:''}><svg><polyline id="padLine" fill="none" stroke="${padPhoto?'var(--accent)':'var(--ink)'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-    <div class="sub" style="margin-top:8px">用手指从地面一笔画到顶，横移和拐弯都可以画出来。也可以先拍一张岩壁照片垫在下面描；照片只用来描线，不会保存。画一次，这条线以后都用这个形状。</div>
-    <div class="sub" id="drawErr" style="color:var(--ink)"></div>
-    <label class="ghostbtn" style="display:flex;align-items:center;justify-content:center">${padPhoto?'换一张照片':'拍照或选照片做底图'}<input type="file" accept="image/*" id="photo" hidden></label>
-    <div class="two"><button class="ghostbtn" id="drawAuto">用自动的线</button><button class="save" id="drawOk">用这条线</button></div>`;
-    bindPad();return}
   if(mode==='pick'){const A=active();el.innerHTML=`
     <div class="row"><div class="eyebrow">记一条线</div><button class="link" id="close">取消</button></div>
     <button class="gymchip" id="gymBtn">${esc(data.gym)} ›</button>
@@ -1492,7 +1468,6 @@ $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b
   if(d.strip){startStrip(d.strip,'routes');return}
   if(d.restore){restoreRoute(R(d.restore));return}
   if(b.id==='openBook'){routeBookQ='';mode='routes';renderSheet();return}
-  if(b.id==='stripCancel'){cancelStrip();closeSheet();renderAll();return}
   if(b.id==='toBook'){mode='book';renderSheet();return}
   if(b.id==='peakGo'){pickPeak(bookSel);mountView=null;closeSheet();go('mount');return}
   if(b.id==='close'){closeSheet();renderAll();return}
