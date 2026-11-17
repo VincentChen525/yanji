@@ -1187,7 +1187,7 @@ function renderMount(part){
        <div class="mnum">${isAct||cur>0?`<b>${fmt(cur)}</b> / `:''}${isAct||cur>0?fmt(T.m):`<b>${fmt(T.m)}</b>`} m</div></div>${s}</div>`;
   // 滚轮下面固定高度的一行：正在爬的那座显示离顶多远，别的山显示"就爬它"
   const nextS=sts.find(st=>st[0]>cur&&!stSeen(st));
-  const actH=isAct?`<div class="sub">${nextS?`下一站「${esc(nextS[1])}」还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(nextS[0]-cur)} m</b> · `:''}到顶 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b></div>`
+  const actH=isAct?`<div class="sub">${nextS?`下一站「${esc(nextS[1])}」还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(nextS[0]-cur)} m</b> · `:''}到顶还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b></div>`
     :`<button class="save" id="mGo">${cur>0?'接着爬它':doneN?'再爬一次':'就爬它'}</button>
       <div class="sub">${E.explicit?`${E.act}会停在 ${fmt(E.cur)} m。`:E.cur>0?`${E.act}是默认接上的；已爬的 ${fmt(E.cur)} m 会算给${V}。`:`${E.act}还没开始，直接换。`}</div>`;
   if(part&&$('mDeck')){$('mDeck').innerHTML=cardH;$('mAct').innerHTML=actH;$('mBig').textContent=fmt(total);syncBadge();return}
@@ -1196,13 +1196,13 @@ function renderMount(part){
   $('p-mount').innerHTML=`
    <div class="row"><div class="eyebrow">累计爬升</div><button class="link" data-share="mount">分享</button></div>
    <div class="big" style="margin-top:8px"><span id="mBig">${fmt(total)}</span><small>m</small></div>
-   <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天 · ${data.climbs.length} 次${nTop?` · 登顶 ${nTop} 次`:''}`:'记下第一条线，就从山脚出发。'}</div>
-   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)}—${lab(last.date)} · ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
+   <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天，${data.climbs.length} 次攀爬${nTop?`，登顶 ${nTop} 次`:''}。`:'记下第一条线，就从山脚出发。'}</div>
+   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
      <div class="sub" style="margin-top:8px">${esc(un.s[3])}</div>
      <div class="sub" style="margin-top:10px;color:var(--ink)">${stopSeg.d} 天 · ${stopSeg.n} 次 · ${fmt(stopSeg.m)} m${stopSeg.gyms>1?` · ${stopSeg.gyms} 家馆`:''}${stopSeg.best?` · 最高 ${stopSeg.best}`:''}</div>
      ${stopSeg.name?`<div class="sub" style="margin-top:4px">爬最多：${esc(stopSeg.name)} · ${stopSeg.cnt} 次</div>`:''}</div>`:''}
    <div id="mDeck" style="margin-top:12px">${cardH}</div>
-   <div class="row" style="margin-top:24px"><div class="eyebrow">换一座山</div><button class="link" id="mBook">全部</button></div>
+   <div class="row" style="margin-top:24px"><div class="eyebrow">滑动选一座山</div><button class="link" id="mBook">全部</button></div>
    <div class="wheelbox"><div class="wheel" id="wheel">${LANDMARKS.map(item).join('')}</div><b class="wptr"></b></div>
    <div class="legend" style="justify-content:center;margin-top:2px"><span><i class="wd now"></i>正在爬</span><span><i class="wd done"></i>登顶过</span><span><i class="wd paused"></i>暂停</span></div>
    <div id="mAct">${actH}</div>`;
@@ -1320,7 +1320,7 @@ function renderPyr(){
    <div class="card" style="margin-top:14px">${rows||'<div class="sub">还没有记录。</div>'}</div>
    <div class="legend"><span><i class="k"></i>完攀过</span><span><i class="k ghost"></i>建议补 ${G[goal]}</span></div>
    <div class="sub" style="margin-top:12px">同一条线只算一条：1 条<b style="color:var(--ink)">解锁</b> · 3 条<b style="color:var(--ink)">站稳</b> · 5 条<b style="color:var(--ink)">吃透</b>；级别按站稳算。方式分开统计，不跨方式比。</div>
-   ${badges?`<h2>同级名线</h2><div class="sub">站稳一级，点亮一条同级野外名线；只当路标。</div><div class="strip">${badges}</div>`:''}
+   ${badges?`<h2>同级名线</h2><div class="sub">每站稳一级，点亮一条纸面同级的野外名线。岩馆和野外的手感差很多，只当路标看。</div><div class="strip">${badges}</div>`:''}
    ${gap}`}
 $('p-pyr').onclick=e=>{const b=e.target.closest('button[data-pt]');if(!b)return;pyrType=b.dataset.pt;if(b.dataset.pm)pyrMode=b.dataset.pm;renderPyr()};
 
