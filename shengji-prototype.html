@@ -153,6 +153,30 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .rrow .gl{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .mk{display:inline-block;width:10px;height:10px;flex-shrink:0;vertical-align:-1px}
 .rrow.plain{cursor:default}
+/* 线路簿 */
+.bookrow{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--hair)}
+.bookrow .bookopen{flex:1;min-width:0;background:none;border:none;padding:10px 0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.bookrow .bookopen b{display:block;font-family:var(--serif);font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bookrow .bookopen em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bookact{flex:none;border:1px solid var(--hair);background:none;border-radius:14px;padding:5px 11px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}
+.bookact:active{opacity:.6}
+/* 拆线动画：电动螺丝刀把岩点上的螺丝拧下来 */
+.stripwrap{text-align:center}
+.strip-hint{font-size:12px;color:var(--muted);margin-top:4px}
+.strip-done{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--accent);margin-top:2px;opacity:0}
+#stBolt,#stHold{transform-box:fill-box;transform-origin:center}
+#stToolWrap{transform:translate(110px,0)}
+.stripgo #stToolWrap{animation:stToolIn .2s cubic-bezier(.2,.8,.2,1) .05s both,stToolOut .18s ease-in .7s both}
+.stripgo #stBolt{animation:stBolt .46s linear .24s both}
+.stripgo #stSpin{animation:stSpinA .46s linear .24s both}
+.stripgo #stHold{animation:stHoldFall .52s cubic-bezier(.5,.05,.9,.5) .76s both}
+.stripgo #stripDone{animation:stDone .28s ease-out 1.12s both}
+@keyframes stToolIn{from{transform:translate(110px,0)}to{transform:translate(0,0)}}
+@keyframes stToolOut{from{transform:translate(0,0)}to{transform:translate(112px,0)}}
+@keyframes stBolt{0%{transform:rotate(0);opacity:1}55%{transform:translate(7px,1px) rotate(720deg);opacity:1}100%{transform:translate(15px,-3px) rotate(900deg);opacity:0}}
+@keyframes stSpinA{0%,100%{opacity:0}20%,65%{opacity:.9}}
+@keyframes stHoldFall{0%{transform:translate(0,0) rotate(0)}18%{transform:translate(1px,-3px) rotate(-1.5deg)}100%{transform:translate(30px,170px) rotate(16deg)}}
+@keyframes stDone{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 nav{position:absolute;left:0;right:0;bottom:0;display:flex;background:linear-gradient(to top,var(--paper) 72%,transparent);padding:26px 18px calc(22px + env(safe-area-inset-bottom))}
 nav button{flex:1;background:none;border:none;font-family:var(--serif);font-size:15px;color:var(--muted);padding:8px 0;cursor:pointer;position:relative}
 nav button.on{color:var(--ink);font-weight:600}
@@ -601,7 +625,7 @@ function renderRoute(){const r=R(curRid);if(!r){go('today');return}
   const groups=rope?[...new Set(all.map(c=>MODEG(cMode(c,r))))]:[];
   if(!rope||groups.length<2)routeSel=null;else if(routeSel&&!groups.includes(routeSel))routeSel=null;
   const cs=routeClimbs(r),sent=cs.some(c=>c.result==='send'),twin=twinOf(r);
-  const status=r.retired?'已撤线':sent?'已完攀':'还在磕';
+  const status=r.retired?'已拆线':sent?'已完攀':'还在磕';
   const cnt=g=>all.filter(c=>MODEG(cMode(c,r))===g).length;
   const sub=rope
     ?`${r.grade} · ${r.wall}m · 爬了 ${all.length} 次${groups.length>1?`（${groups.map(g=>GNAME[g]+' '+cnt(g)+' 次').join(' · ')}）`:' · '+GNAME[groups[0]]} · ${status}`
@@ -617,14 +641,15 @@ function renderRoute(){const r=R(curRid);if(!r){go('today');return}
    <div class="two"${rope&&cs.length>1?'':' style="grid-template-columns:1fr"'}>${rope&&cs.length>1?'<button class="ghostbtn" id="replay">▶ 回放</button>':''}<button class="save" id="again"${r.retired?' disabled style="opacity:.4"':''}>再记一次</button></div>
    <h2>每一次</h2>
    <div>${[...cs].reverse().map(c=>{const i=all.indexOf(c);return `<div class="rrow plain"><span><b>${desc(c,r)}${c.why?' · '+REASON[c.why]:''}</b><em>第 ${i+1} 次 · ${lab(c.date)}${rope?' · '+MODE[cMode(c,r)]:''}</em></span><span class="gl">${glyph(c)}</span></div>`}).join('')}</div>
-   <div style="margin-top:16px;text-align:center"><button class="link" id="retire">${r.retired?'这条线还在，恢复它':'这条线撤了'}</button></div>
+   <div style="margin-top:16px;text-align:center"><button class="link" id="retire">${r.retired?'这条线还在，装回去':'拆线'}</button></div>
+   <div class="sub" style="text-align:center;margin-top:2px">${r.retired?'装回去之后会重新出现在「在爬」里':'拆线后还留在线路簿里，随时可以装回去'}</div>
    ${twin?`<div style="margin-top:12px;text-align:center"><button class="link" id="merge">和另一条同名的线合并（${lab(twin.since)} 开始爬，${climbsOf(twin.id).length} 次）</button></div>`:''}
    <div style="margin-top:12px;text-align:center"><button class="link" id="del">删除这条线</button></div>`}
 const norm=s=>String(s||'').trim().toLowerCase();
 const sameLine=(x,o)=>x.gym===o.gym&&x.type===o.type&&x.grade===o.grade&&(o.type==='b'||((x.mode||'lead')===(o.mode||'lead')&&x.wall===o.wall))&&norm(x.name)===norm(o.name);
 const twinOf=r=>data.routes.find(x=>x.id!==r.id&&sameLine(x,r));
-// 改名（restore=true 时同时把已撤的线恢复）。不允许和另一条在爬的线重名
-function renameAsk(r,restore){ask({title:restore?'改个名再恢复':'改名',body:restore?'给这条线换个名字，好和正在爬的那条区分开。':'这条线叫什么？',input:r.name,yes:restore?'改名并恢复':'保存',
+// 改名（restore=true 时同时把已拆线的线装回去）。不允许和另一条在爬的线重名
+function renameAsk(r,restore){ask({title:restore?'改个名再装回去':'改名',body:restore?'给这条线换个名字，好和正在爬的那条区分开。':'这条线叫什么？',input:r.name,yes:restore?'改名并装回去':'保存',
   onYes:v=>{v=v.trim();if(!v)return'名字不能为空';
     if(data.routes.some(x=>x.id!==r.id&&!x.retired&&sameLine(x,{...r,name:v})))return'这家岩馆已经有一条同名的线在爬，换一个名字。';
     r.name=v;if(restore)r.retired=false;persist();closeSheet();renderAll()}})}
@@ -636,16 +661,37 @@ function mergeRoutes(a,b){const first=x=>{const c=climbsOf(x.id)[0];return c?c.t
   keep.retired=false;if(!keep.shape&&gone.shape)keep.shape=gone.shape;if(gone.since<keep.since)keep.since=gone.since;if(!gone.demo)delete keep.demo;
   data.routes=data.routes.filter(x=>x.id!==gone.id);curRid=keep.id;persist()}
 function openRoute(rid,group){curRid=rid;routeSel=group||null;if(page!=='route')backTo=page;go('route')}
+// 装回去：先查有没有同名的线在爬（两条一模一样的线没法区分，需要合并或改名）
+function restoreRoute(r){const t=twinOf(r);
+  if(t&&!t.retired){ask({title:'有一条同名的线正在爬',body:`「${esc(t.name)} · ${meta(t)}」现在有一条在爬（${lab(t.since)} 开始爬，${climbsOf(t.id).length} 次）。两条一模一样的线没法区分，所以装回去之前要选一个：<br><br>它们其实是同一条，就合并成一条。是两条不同的线，就给这条改个名。`,
+    yes:'合并成一条',no:'改个名再装回去',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()},onNo:()=>renameAsk(r,true)});return}
+  r.retired=false;persist();
+  if(mode==='routes')renderSheet();else{mode='pick';closeSheet();renderAll()}}
+/* ---------- 拆线：拿电动螺丝刀把岩点上的螺丝拧下来 ---------- */
+let stripRid=null,stripBack=null,stripTimer=null;
+function startStrip(rid,back){
+  stripRid=rid;stripBack=back||null;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){finishStrip();return}
+  mode='strip';renderSheet();phone.classList.add('open');
+  requestAnimationFrame(()=>{const w=$('stripwrap');if(w)w.classList.add('stripgo')});
+  clearTimeout(stripTimer);stripTimer=setTimeout(finishStrip,1650);
+}
+function cancelStrip(){if(!stripRid)return false;clearTimeout(stripTimer);stripRid=null;stripBack=null;stripTimer=null;mode='pick';return true}
+function finishStrip(){
+  if(!stripRid)return;
+  const r=R(stripRid),back=stripBack;stripRid=null;stripBack=null;stripTimer=null;
+  if(r){r.retired=true;persist()}
+  if(navigator.vibrate)navigator.vibrate(12);
+  if(back==='routes'){mode='routes';renderSheet()}
+  else{mode='pick';closeSheet();renderAll()}
+}
 $('p-route').onclick=e=>{const b=e.target.closest('button');if(!b)return;const r=R(curRid);
   if(b.id==='rback')go(backTo);
   else if(b.dataset.rs!==undefined){routeSel=b.dataset.rs||null;renderRoute()}
   else if(b.id==='rename')renameAsk(r,false);
   else if(b.id==='merge'){const t=twinOf(r);if(t)ask({title:'合并同名的线',body:`把这两条「${esc(r.name)} · ${meta(r)}」合成一条，两边的攀爬记录按时间排在一起。合并后不能拆开。`,lock:true,yes:'合并',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()}})}
   else if(b.id==='del')ask({title:'删除这条线',body:`「${esc(r.name)}」和它的 ${climbsOf(r.id).length} 次攀爬记录会一起删掉，不能恢复。`,lock:true,yes:'删除',onYes:()=>{data.climbs=data.climbs.filter(c=>c.rid!==r.id);data.routes=data.routes.filter(x=>x.id!==r.id);persist();closeSheet();go(backTo)}})
-  else if(b.id==='retire'){const t=r.retired&&twinOf(r);
-    if(t&&!t.retired)ask({title:'有一条同名的线正在爬',body:`「${esc(t.name)} · ${meta(t)}」现在有一条在爬（${lab(t.since)} 开始爬，${climbsOf(t.id).length} 次）。两条一模一样的线没法区分，所以恢复之前要选一个：<br><br>它们其实是同一条，就合并成一条。是两条不同的线，就给这条改个名。`,
-      yes:'合并成一条',no:'改个名再恢复',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()},onNo:()=>renameAsk(r,true)});
-    else{r.retired=!r.retired;persist();renderRoute()}}
+  else if(b.id==='retire'){if(r.retired)restoreRoute(r);else startStrip(r.id,null)}
   else if(b.id==='again'){if(r.retired)return;data.gym=r.gym;startForm(r.id);
     if(r.type!=='b'&&routeSel){const cl=routeClimbs(r);draft.mode=cl.length?cMode(cl[cl.length-1],r):(routeSel==='up'?'tr':'lead')}
     openSheet('form')}
@@ -1212,7 +1258,7 @@ $('p-review').onclick=e=>{if(e.target.closest('#heat')){histAt(e);return}const b
 };
 
 /* ---------- 底部面板：选线 / 记一次 / 描线 / 岩馆 / 设置 ---------- */
-let mode='pick',draft={},padPts=[],padPhoto=null;
+let mode='pick',draft={},padPts=[],padPhoto=null,routeBookQ='';
 function startForm(rid){const r=rid&&R(rid),last=r&&climbsOf(rid).pop();
   draft=r?{rid,type:r.type,grade:r.grade,wall:r.wall,mode:(last&&last.mode)||r.mode||'lead',shape:r.shape||null,name:r.name,result:'send',hangs:1,high:.6,why:null}
          :{rid:null,type:draft.type||'l',gl:draft.gl||'5.10c',gb:draft.gb||'V2',wall:gymObj().wall||15,mode:draft.mode||'lead',shape:null,name:'',result:'send',hangs:1,high:.6,why:null}}
@@ -1237,14 +1283,71 @@ function bindPad(){const pad=$('pad'),ln=$('padLine');
   pad.onpointermove=e=>{if(!on)return;padPts.push(pt(e));draw()};
   pad.onpointerup=pad.onpointercancel=()=>{on=false};
   $('photo').onchange=e=>{const f=e.target.files[0];if(!f)return;if(padPhoto)URL.revokeObjectURL(padPhoto);padPhoto=URL.createObjectURL(f);renderSheet()}}
+function bookLive(){return data.routes.filter(r=>r.gym===data.gym&&!r.retired).sort((a,b)=>lastDate(b).localeCompare(lastDate(a)))}
+function bookDead(){return data.routes.filter(r=>r.gym===data.gym&&r.retired).sort((a,b)=>lastDate(b).localeCompare(lastDate(a)))}
+function bookRow(r,dead){const cs=climbsOf(r.id),last=cs.length?lab(cs[cs.length-1].date)+' 最近':'还没爬过',
+  m=r.type==='b'?' · 抱石':' · '+MODE[r.mode||'lead']+' · '+r.wall+'m';
+  return`<div class="bookrow"><button class="bookopen" data-book="${r.id}"><span><b>${tape(r.name)}${esc(r.name)}</b><em>${r.grade}${m} · ${last}</em></span></button><button class="bookact" data-${dead?'restore':'strip'}="${r.id}">${dead?'装回去':'拆线'}</button></div>`}
+function bookListHtml(){const q=routeBookQ.trim().toLowerCase(),hit=r=>!q||r.name.toLowerCase().includes(q)||r.grade.toLowerCase().includes(q);
+  const live=bookLive().filter(hit),dead=bookDead().filter(hit);
+  return`<div class="lbl">在爬 · ${live.length}</div>${live.length?live.map(r=>bookRow(r,false)).join(''):'<div class="sub" style="margin-top:6px">这里还没有线。</div>'}
+    <div class="lbl" style="margin-top:22px">已拆线 · ${dead.length}</div>${dead.length?dead.map(r=>bookRow(r,true)).join(''):'<div class="sub" style="margin-top:6px">还没有拆掉的线。拆掉的会留在这里，随时能装回去。</div>'}`}
 function renderSheet(){
   const el=$('sheet');
   if(mode==='book'){el.innerHTML=bookHtml();return}
   if(mode==='peak'){el.innerHTML=peakHtml();return}
+  if(mode==='routes'){
+    const live=bookLive(),dead=bookDead();
+    el.innerHTML=`<div class="row"><div class="eyebrow">线路簿</div><button class="link" id="close">完成</button></div>
+      <div class="sub" style="margin-top:6px">${esc(data.gym)} · 一共 ${live.length+dead.length} 条线。点一条看详情。</div>
+      <input class="field" id="bookQ" placeholder="找一条线：名字或难度" maxlength="24" value="${esc(routeBookQ)}">
+      <div id="bookList">${bookListHtml()}</div>`;
+    const q=$('bookQ');if(q)q.oninput=e=>{routeBookQ=e.target.value;const bl=$('bookList');if(bl)bl.innerHTML=bookListHtml()};
+    return}
+  if(mode==='strip'){const r=R(stripRid);
+    el.innerHTML=`<div class="stripwrap" id="stripwrap">
+      <div class="row"><div class="eyebrow">拆线</div><button class="link" id="stripCancel">取消</button></div>
+      <svg viewBox="0 0 320 200" width="100%" style="display:block;margin-top:4px" fill="none" stroke="var(--ink)" stroke-linecap="round" stroke-linejoin="round">
+        <defs><pattern id="stripDots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r=".8" fill="var(--hair)" stroke="none"/></pattern></defs>
+        <rect width="320" height="200" fill="url(#stripDots)" stroke="none"/>
+        <g id="stHold">
+          <path d="M124 75c9-7 22-8 32-2 11 7 16 20 13 31-3 13-16 22-29 21-12-1-22-9-25-20-3-11 0-22 9-30z" fill="var(--card)" stroke-width="1.7"/>
+          <path d="M137 89c4-4 9-6 15-5M135 98c6-5 13-7 20-5" stroke-width="1" opacity=".45"/>
+          <circle cx="150" cy="104" r="6.2" stroke-width="1.1" opacity=".4"/>
+        </g>
+        <g id="stBolt"><circle cx="150" cy="104" r="13" fill="var(--card)" stroke-width="1.5"/>
+          <path d="M150 95.6l7.2 4.2v8.4l-7.2 4.2-7.2-4.2v-8.4z" stroke-width="1.3"/>
+          <circle cx="150" cy="104" r="3.2" stroke-width="1.1" opacity=".5"/></g>
+        <g id="stSpin" opacity="0">
+          <path d="M172 95a24 24 0 0 1 4 13" stroke-width="1.3"/>
+          <path d="M128 113a24 24 0 0 1-4-13" stroke-width="1.3"/>
+          <path d="M164 122a24 24 0 0 1-9 3" stroke-width="1.3"/>
+          <path d="M136 86a24 24 0 0 1 9-3" stroke-width="1.3"/>
+        </g>
+        <g id="stToolWrap"><g transform="translate(218 104) rotate(-6)">
+          <path d="M-54-1.7l7 1.7-7 1.7z" fill="var(--ink)" stroke="none"/>
+          <rect x="-50" y="-3.2" width="13" height="6.4" rx="1.2" stroke-width="1.2" fill="var(--card)"/>
+          <rect x="-38" y="-7" width="12" height="14" rx="2.2" stroke-width="1.4" fill="var(--card)"/>
+          <path d="M-34-7v14M-30-7v14" stroke-width=".8" opacity=".5"/>
+          <rect x="-26" y="-15" width="80" height="30" rx="14" stroke-width="1.7" fill="var(--paper)"/>
+          <path d="M-10-15v30M0-15v30" stroke-width=".8" opacity=".38"/>
+          <path d="M-20-15c4-2.4 7-3.4 11-3.4M-20 15c4 2.4 7 3.4 11 3.4" stroke-width="1" opacity=".35"/>
+          <path d="M54-6.5c3 2.2 4.2 4.4 4.2 6.5S57 10.3 54 12.5" stroke-width="1.1" opacity=".5"/>
+          <path d="M6 15h20l4 32H6z" fill="var(--card)" stroke-width="1.4"/>
+          <rect x="8" y="47" width="24" height="10" rx="3" fill="var(--paper)" stroke-width="1.3"/>
+          <path d="M4 15h3" stroke-width="1.6"/>
+        </g></g>
+      </svg>
+      <div class="strip-hint">${r?esc(r.name)+' · ':''}把岩点上的螺丝拧下来</div>
+      <div class="strip-done" id="stripDone">已拆线</div>
+    </div>`;
+    return}
   if(mode==='set'){el.innerHTML=`
     <div class="row"><div class="eyebrow">设置</div><button class="link" id="close">完成</button></div>
     <div class="lbl">岩馆</div>
     <button class="ghostbtn" id="gymBtn">${data.gym?esc(data.gym)+' · 切换或添加':'添加岩馆'}</button>
+    <div class="lbl">线路</div>
+    <button class="ghostbtn" id="openBook">线路簿 · 拆线 / 装回去</button>
     <div class="lbl">备份</div>
     <div class="two"><button class="ghostbtn" id="bkFile">存成文件</button><button class="ghostbtn" id="backup">复制成文字</button></div>
     <div class="lbl">恢复</div>
@@ -1292,7 +1395,7 @@ function renderSheet(){
   if(mode==='pick'){const A=active();el.innerHTML=`
     <div class="row"><div class="eyebrow">记一条线</div><button class="link" id="close">取消</button></div>
     <button class="gymchip" id="gymBtn">${esc(data.gym)} ›</button>
-    <div class="lbl">这里在爬的线</div>
+    <div class="row" style="margin-top:14px"><div class="lbl" style="margin-top:0">这里在爬的线</div><button class="link" id="openBook">线路簿</button></div>
     <div style="max-height:300px;overflow-y:auto">${A.map(r=>{const cs=climbsOf(r.id);return`<button class="rrow" data-pick="${r.id}"><span><b>${tape(r.name)}${esc(r.name)}</b><em>${meta(r)} · ${lab(r.since)} 起</em></span><span class="gl">${cs.slice(-5).map(glyph).join('')}</span></button>`}).join('')}</div>
     <button class="save" id="newRoute">＋ 一条新的线</button>`;return}
   // mode==='form'：新线（选难度、起名）或已有的线（只选结果）
@@ -1385,6 +1488,11 @@ function saveDraft(useRoute){const b=draft.type==='b',res=dRes();let r=draft.rid
   data.climbs.push(c);persist();return r}
 $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;fwSync();
   if(d.peak){bookSel=d.peak;mode='peak';renderSheet();$('sheet').scrollTop=0;return}
+  if(d.book){closeSheet();openRoute(d.book);return}
+  if(d.strip){startStrip(d.strip,'routes');return}
+  if(d.restore){restoreRoute(R(d.restore));return}
+  if(b.id==='openBook'){routeBookQ='';mode='routes';renderSheet();return}
+  if(b.id==='stripCancel'){cancelStrip();closeSheet();renderAll();return}
   if(b.id==='toBook'){mode='book';renderSheet();return}
   if(b.id==='peakGo'){pickPeak(bookSel);mountView=null;closeSheet();go('mount');return}
   if(b.id==='close'){closeSheet();renderAll();return}
@@ -1394,7 +1502,7 @@ $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b
   if(b.id==='askNo'){const a=askCfg;if(a.onNo)a.onNo();else{closeSheet();renderAll()}return}
   if(b.id==='askYes'){const a=askCfg,i=$('askIn'),err=a.onYes(i?i.value:undefined);if(typeof err==='string')$('askErr').textContent=err;return}
   if(b.id==='save'){if(b.classList.contains('go'))return;b.classList.add('go');setTimeout(()=>{if(navigator.vibrate)navigator.vibrate(10);const dup=findDup();
-    if(dup)ask({title:'这条线是不是已经在爬了',body:`这家岩馆有一条在爬的「${esc(dup.name)} · ${meta(dup)}」，${lab(dup.since)} 开始爬，已经爬了 ${climbsOf(dup.id).length} 次。<br><br>是同一条，这次就记到它上面。是新定的线，就另建一条，旧的那条标记为已撤。`,
+    if(dup)ask({title:'这条线是不是已经在爬了',body:`这家岩馆有一条在爬的「${esc(dup.name)} · ${meta(dup)}」，${lab(dup.since)} 开始爬，已经爬了 ${climbsOf(dup.id).length} 次。<br><br>是同一条，这次就记到它上面。是新定的线，就另建一条，旧的那条标成已拆线。`,
       yes:'是同一条',no:'是新定的线',onYes:()=>finishSave(dup),onNo:()=>{dup.retired=true;finishSave()}});
     else finishSave()},matchMedia('(prefers-reduced-motion: reduce)').matches?0:340);return}
   if(b.id==='backup'){data.bk=TODAY;persist();return copy(JSON.stringify(data),b,'已复制')}
@@ -1449,7 +1557,7 @@ const phone=$('phone');
 function openSheet(m){if(m==='log')startLog();else{mode=m;renderSheet()}phone.classList.add('open')}
 function closeSheet(){phone.classList.remove('open')}
 $('fab').onclick=()=>openSheet('log');
-$('veil').onclick=()=>{closeSheet();renderAll()};
+$('veil').onclick=()=>{cancelStrip();closeSheet();renderAll()};
 
 /* ---------- 导航 ---------- */
 let page='today';
