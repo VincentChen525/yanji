@@ -1878,7 +1878,19 @@ async function drawSticker(ctx,D){
   let dw=maxW,dh=150,dx=(W-dw)/2,dy=150;
   if(img){const sc=Math.min(maxW/img.width,maxH/img.height);dw=img.width*sc;dh=img.height*sc;dx=(W-dw)/2;dy=160}
   if(img){ctx.save();ctx.shadowColor='rgba(31,29,25,.22)';ctx.shadowBlur=16;ctx.shadowOffsetY=8;ctx.drawImage(img,dx,dy,dw,dh);ctx.restore()}
-  else{ctx.save();ctx.fillStyle='#FFFDF7';ctx.beginPath();ctx.moveTo(dx+10,dy+dh);ctx.lineTo(dx+dw*.25,dy+dh*.25);ctx.lineTo(dx+dw*.45,dy+dh*.55);ctx.lineTo(dx+dw*.62,dy+dh*.12);ctx.lineTo(dx+dw*.82,dy+dh*.5);ctx.lineTo(dx+dw-10,dy+dh);ctx.closePath();ctx.fill();ctx.restore()}
+  else{
+    // 本地 file:// 打开时图片读不进来：用山页同一份 SVG 路径画在贴纸里，形也也在
+    const A=artOf(D.name);
+    const mk=()=>{ctx.beginPath();ctx.moveTo(dx+10,dy+dh);ctx.lineTo(dx+dw*.25,dy+dh*.25);ctx.lineTo(dx+dw*.45,dy+dh*.55);ctx.lineTo(dx+dw*.62,dy+dh*.12);ctx.lineTo(dx+dw*.82,dy+dh*.5);ctx.lineTo(dx+dw-10,dy+dh);ctx.closePath()};
+    ctx.save();ctx.shadowColor='rgba(31,29,25,.22)';ctx.shadowBlur=16;ctx.shadowOffsetY=8;mk();ctx.fillStyle='#FFFDF7';ctx.fill();ctx.restore();
+    ctx.save();mk();ctx.clip();
+    const aw=Math.max(1,A.w||100),ah=100,sy=Math.min((dw-26)/aw,(dh-18)/ah),ox=dx+(dw-aw*sy)/2,oy=dy+dh-8-ah*sy;
+    ctx.translate(ox,oy);ctx.scale(sy,sy);
+    ctx.strokeStyle=SHARE_INK;ctx.lineWidth=1.6/sy;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke(new Path2D(A.d));
+    if(A.d2){ctx.strokeStyle=SHARE_MUTED;ctx.lineWidth=.8/sy;ctx.stroke(new Path2D(A.d2))}
+    ctx.restore();
+    ctx.beginPath();ctx.arc(ox+(A.ax||aw/2)*sy,oy+2,3.2,0,7);ctx.fillStyle=SHARE_ACC;ctx.fill();
+  }
   // 橙色胶带标题
   ctx.save();ctx.translate(18,120);ctx.rotate(-8*Math.PI/180);ctx.fillStyle='rgba(226,85,43,.9)';ctx.fillRect(0,0,154,34);sText(ctx,D.tapeLabel,16,22,12,'#FFF8EC');ctx.restore();
   sText(ctx,'还差 '+fmt(D.left)+' m',406,54,20,SHARE_INK,'right',500);
