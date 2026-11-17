@@ -167,7 +167,6 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
   transition:border-color .18s ease,box-shadow .18s ease}
 .peek{position:absolute;left:13px;right:13px;height:2.5px;border-radius:2px;background:transparent;pointer-events:none;z-index:2;opacity:.5}
 .pk-top{top:3px}.pk-bot{bottom:3px}
-.colwheel.need{border-color:var(--accent);box-shadow:0 0 0 2px rgba(226,85,43,.14)}
 .cw{height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:6px 0;scrollbar-width:none;
   -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20%,#000 80%,transparent 100%);
   mask-image:linear-gradient(to bottom,transparent 0,#000 20%,#000 80%,transparent 100%)}
@@ -175,9 +174,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .colchip{height:34px;display:flex;align-items:center;justify-content:center;width:100%;border:none;background:none;cursor:pointer;
   scroll-snap-align:center;opacity:calc(.16 + .84*var(--k,0));transform:scale(calc(.84 + .16*var(--k,0)))}
 .colchip .tape{width:34px;height:13px;margin:0}
-.colchip .originSwatch{width:34px;height:13px;border:1px solid var(--hair);border-radius:2px;background:repeating-linear-gradient(45deg,transparent 0 3px,rgba(31,29,25,.28) 3px 4px)}
 .nf .namerow .field{margin-top:0;flex:1;height:46px}
-.cwtip{display:none;margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)}
 /* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
 .stripLayer{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:26px;
   background:rgba(244,240,230,.55);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
@@ -1422,7 +1419,7 @@ let mode='pick',draft={},padPts=[],padPhoto=null,routeBookQ='',lastColorKey=null
 function startForm(rid){const r=rid&&R(rid),last=r&&climbsOf(rid).pop();
   draft=r?{rid,type:r.type,grade:r.grade,wall:r.wall,mode:(last&&last.mode)||r.mode||'lead',shape:r.shape||null,name:r.name,result:'send',hangs:1,high:.6,why:null}
          :{rid:null,type:draft.type||'l',gl:draft.gl||'5.10c',gb:draft.gb||'V2',wall:gymObj().wall||15,mode:draft.mode||'lead',shape:null,
-            color:lastColorKey||null,name:lastColorKey?colorWord(lastColorKey):'',result:'send',hangs:1,high:.6,why:null}}
+            color:lastColorKey||'红',name:colorWord(lastColorKey||'红'),result:'send',hangs:1,high:.6,why:null}}
 const dGrade=()=>draft.rid?draft.grade:draft.type==='b'?draft.gb:draft.gl;
 const dRes=()=>{const b=draft.type==='b';return draft.result==='hang'&&(b||draft.mode==='auto')?'send':draft.result};
 function draftObj(){const b=draft.type==='b',res=dRes(),first=res==='send'&&(!draft.rid||!climbsOf(draft.rid).length);
@@ -1542,11 +1539,10 @@ function renderSheet(){
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
      <div class="lbl">名字</div>
      <div class="namerow">
-       <div class="colwheel" id="colwheel"><i class="peek pk-top" id="pkTop"></i><i class="peek pk-bot" id="pkBot"></i><div class="cw" id="cw"><button class="colchip none" data-v=""><i class="originSwatch"></i></button>${COLORKEYS.map(k=>`<button class="colchip" data-v="${k}">${tapeSvg(k,true)}</button>`).join('')}</div></div>
-       <div class="colname" id="cwName">${draft.color||'原色'}</div>
+       <div class="colwheel" id="colwheel"><i class="peek pk-top" id="pkTop"></i><i class="peek pk-bot" id="pkBot"></i><div class="cw" id="cw">${COLORKEYS.map(k=>`<button class="colchip" data-v="${k}">${tapeSvg(k,true)}</button>`).join('')}</div></div>
+       <div class="colname" id="cwName">${draft.color||'红'}</div>
        <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}">
-     </div>
-     <div class="cwtip" id="cwTip">先上下滚一下，选个颜色</div>`
+     </div>`
    :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${b?meta(R(draft.rid)):draft.grade+" · "+draft.wall+"m"} · 第 ${climbsOf(draft.rid).length+1} 次</div>
        ${b?'<div class="sub">抱石画成地上的一块石头。</div>':''}</div><button class="preview" id="pv">${previewSvg()}</button></div>`}
    ${isNew||b?'':`<div class="lbl">本次方式</div><div class="tog tri" style="margin-top:8px">${Object.entries(MODE).map(([k,t])=>`<button data-cm="${k}" class="${draft.mode===k?'on':''}">${ico(k,13)}${t}</button>`).join('')}</div>`}
@@ -1561,10 +1557,9 @@ function renderSheet(){
   if(cw){const chips=[...cw.children],H=34;
     const pick=()=>{const i=Math.max(0,Math.min(chips.length-1,Math.round(cw.scrollTop/H)));
       chips.forEach((b,j)=>b.style.setProperty('--k',Math.max(0,1-Math.abs(j-i)*0.6).toFixed(2)));
-      draft.color=chips[i].dataset.v||null;const cname=$('cwName');if(cname)cname.textContent=draft.color||'原色';
+      draft.color=chips[i].dataset.v;const cname=$('cwName');if(cname)cname.textContent=draft.color||'';
       const colOf=b=>b?(b.dataset.v?TAPE[b.dataset.v]:'transparent'):'transparent';
       const pt=$('pkTop'),pb=$('pkBot');if(pt)pt.style.background=colOf(chips[i-1]);if(pb)pb.style.background=colOf(chips[i+1]);
-      const tip=$('cwTip'),w=$('colwheel');if(tip)tip.style.display='none';if(w)w.classList.remove('need');
       syncName()};
     cw.scrollTop=H*Math.max(0,chips.findIndex(b=>b.dataset.v===(draft.color||'')));pick();
     cw.onscroll=()=>requestAnimationFrame(pick);
@@ -1645,7 +1640,7 @@ $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b
   if(b.id==='aiCopy'){copy(aiText(),b,'已复制');return}
   if(b.id==='askNo'){const a=askCfg;if(a.onNo)a.onNo();else{closeSheet();renderAll()}return}
   if(b.id==='askYes'){const a=askCfg,i=$('askIn'),err=a.onYes(i?i.value:undefined);if(typeof err==='string')$('askErr').textContent=err;return}
-  if(b.id==='save'){if(!draft.rid&&!draft.color){const tip=$('cwTip'),w=$('colwheel');if(tip)tip.style.display='block';if(w)w.classList.add('need');return}
+  if(b.id==='save'){if(!draft.rid&&!draft.color){draft.color='红';draft.name=draft.name||'红色'}
     if(b.classList.contains('go'))return;b.classList.add('go');setTimeout(()=>{if(navigator.vibrate)navigator.vibrate(10);const dup=findDup();
     if(dup)ask({title:'这条线是不是已经在爬了',body:`这家岩馆有一条在爬的「${esc(dup.name)} · ${meta(dup)}」，${lab(dup.since)} 开始爬，已经爬了 ${climbsOf(dup.id).length} 次。<br><br>是同一条，这次就记到它上面。是新定的线，就另建一条，旧的那条标成已拆线。`,
       yes:'是同一条',no:'是新定的线',onYes:()=>finishSave(dup),onNo:()=>{dup.retired=true;finishSave()}});
