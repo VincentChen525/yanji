@@ -1841,7 +1841,7 @@ function shareDay(d){
   const gyms=[...new Set(cs.map(c=>R(c.rid).gym))].filter(Boolean).join(' · ');
   const firstTxt=firsts?firsts+' 条一次过':sends?sends+' 条完攀':'还在磕';
   const insight=firstTxt+(top?'；'+top.k+' 段最多':'');
-  const day7=new Date(d+'T00:00');day7.setDate(day7.getDate()-6);const from=iso(day7);
+  const day7=new Date(d+'T00:00');day7.setDate(day7.getDate()-((day7.getDay()+6)%7));const from=iso(day7);
   const week=data.climbs.filter(c=>c.date>=from&&c.date<=d).length;
   return{W:360,H:560,date:sWrapDay(d),gym:gyms,routes,climbs,m,sends,firsts,maxGrade:good[0]?good[0].grade:'—',families:fams,insight,week,total:data.climbs.length}
 }
@@ -1893,7 +1893,7 @@ function drawReceipt(ctx,D){
   const iy=y+310;ctx.fillStyle='#F4EFDF';ctx.fillRect(x+18,iy,w-36,54);ctx.fillStyle=SHARE_ACC;ctx.fillRect(x+18,iy,2,54);
   const lines=sWrap(ctx,D.insight,w-60).slice(0,2);lines.forEach((l,i)=>sText(ctx,l,x+30,iy+21+i*17,11,SHARE_INK));
   sDash(ctx,x+18,y+382,x+w-18,y+382,'#CFC8B8');
-  sText(ctx,'本周第 '+D.week+' 次',x+22,y+408,9,SHARE_MUTED);sText(ctx,'第 '+D.total+' 次',x+w-22,y+408,9,SHARE_MUTED,'right');
+  sText(ctx,'本周累计攀爬 '+D.week+' 次',x+22,y+408,9,SHARE_MUTED);sText(ctx,'累计攀爬 '+D.total+' 次',x+w-22,y+408,9,SHARE_MUTED,'right');
   // 条形码
   ctx.save();ctx.globalAlpha=.8;for(let i=0,xx=x+30;xx<x+w-30;i++){const bw2=[1,2,1,3,1,2][i%6];ctx.fillStyle=SHARE_INK;ctx.fillRect(xx,y+428,bw2,18);xx+=bw2+3}ctx.restore();
   sText(ctx,'谢谢攀爬 · 下次再来',W/2,y+470,9,SHARE_MUTED,'center');
