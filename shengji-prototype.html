@@ -335,7 +335,7 @@ button:active:not(:disabled),label.ghostbtn:active{opacity:.6}
 .shareLayer .sv{position:absolute;inset:0;background:rgba(30,27,20,.42);opacity:0;transition:opacity .24s}
 .shareLayer.on .sv{opacity:1;pointer-events:auto}
 .shareSheet{position:absolute;left:0;right:0;bottom:0;max-height:96%;overflow-y:auto;background:var(--card);border-radius:26px 26px 0 0;padding:14px 20px calc(22px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:1}
-.shareLayer.on .shareSheet{transform:none}
+.shareLayer.on .shareSheet{transform:none;pointer-events:auto}
 .shareTop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 8px}
 .shareTop b{font-family:var(--serif);font-size:16px;font-weight:600}
 .shareTop button{background:none;border:none;font:inherit;font-size:13px;color:var(--muted);padding:8px;margin:-8px;cursor:pointer}
