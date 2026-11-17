@@ -142,7 +142,7 @@ def convert(svg):
 
 
 def make_sticker(png_path, out_path, np, ndi, Image):
-    """从 art/<stem>.png 生成透明贴纸：剪影内保留白底和线稿，剪影外透明。"""
+    """从渲染图生成透明贴纸：剪影内保留白底和线稿，剪影外透明；断开的穹顶/塔也保留。"""
     im = Image.open(png_path).convert('RGBA')
     a = np.array(im)
     gray = np.array(im.convert('L'))
@@ -151,8 +151,10 @@ def make_sticker(png_path, out_path, np, ndi, Image):
     f = ndi.binary_fill_holes(m)
     lab, n = ndi.label(f)
     if n > 1:
+        # 保留所有“成块的”组件：大穹顶、宣礼塔、树可能是断开的，不能只取最大一块
         sizes = ndi.sum(f, lab, range(1, n + 1))
-        f = lab == (1 + int(np.argmax(sizes)))
+        keep = [i + 1 for i, sz in enumerate(sizes) if sz >= 30]
+        f = np.isin(lab, keep) if keep else lab == (1 + int(np.argmax(sizes)))
     ys, xs = np.where(f)
     x0, x1 = max(0, xs.min() - 3), min(im.width - 1, xs.max() + 3)
     y0, y1 = max(0, ys.min() - 3), min(im.height - 1, ys.max() + 3)
