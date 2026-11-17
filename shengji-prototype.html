@@ -643,8 +643,8 @@ function renderToday(){
      <div><b>${cs.length}</b><span>次攀爬</span></div>
    </div>
    ${A.length?`<div style="margin-top:8px">${A.map(o=>`<button class="rrow" data-rid="${o.id}" data-mode="${o.type==='b'?'':MODEG(o.mode)}"><span><b>${tape(o)}${esc(o.name)}</b><em>${meta(o)}</em></span><span class="gl">${o.cs.map(glyph).join('')}</span></button>`).join('')}</div>
-     <div class="row" style="margin-top:12px"><div class="sub">点一条线，看它的每一次和回放。</div>${isToday&&cs.length?'<button class="link" id="undo">撤销上一次</button>':''}</div>`:''}
-   ${isToday&&hasDemo()?'<div class="demo"><span>现在看到的是示例数据</span><button class="link" id="wipe">清空，开始记自己的</button></div>':''}
+     <div class="row" style="margin-top:12px"><div class="sub">点一条线，看每次和回放。</div>${isToday&&cs.length?'<button class="link" id="undo">撤销上一次</button>':''}</div>`:''}
+   ${isToday&&hasDemo()?'<div class="demo"><span>示例数据</span><button class="link" id="wipe">清空，记自己的</button></div>':''}
 `;
   syncFab()}
 /* 迹页的点阵：一年里每天一个点，点越大那天爬升越多；登顶的日子是橙红色。手指划过去选日子 */
@@ -666,7 +666,7 @@ function heat(){
   histM={pts,W,H,others:list};const sp=pts.find(q=>q.d===histSel);
   g+=`<circle id="hRing" cx="${sp?sp.x:-99}" cy="${sp?sp.y:-99}" r="7.6" fill="none" stroke="var(--ink)" stroke-width="1.1"/></svg>`;
   return`<div class="row" style="align-items:baseline"><h2>每一次</h2><span class="yrs">${years.length>1?years.map(y=>`<button data-y="${y}" class="${y===yr?'on':''}">${y}</button>`).join(''):`<em>${yr}</em>`}</span></div>
-   <div class="sub">点一个点，看那一天</div>
+   <div class="sub">点一天看记录</div>
    <div class="hscroll" id="hscroll">${g}</div>
    <div class="legend" style="align-items:center"><span class="hleg">爬升 少<svg viewBox="0 0 52 14" width="52" height="14">${[2.6,3.7,4.9,6].map((r,i)=>`<circle cx="${7+i*13}" cy="7" r="${r}" fill="var(--ink)"/>`).join('')}</svg>多</span>${tops.size?'<span><i style="color:var(--accent)">●</i>登顶</span>':''}${perKey()==='all'&&!gymSel?'':'<span><i style="color:var(--ink);opacity:.22">●</i>不在范围内</span>'}</div>
    <div id="histCard">${dayCard(histSel)}</div>`}
@@ -1187,22 +1187,22 @@ function renderMount(part){
        <div class="mnum">${isAct||cur>0?`<b>${fmt(cur)}</b> / `:''}${isAct||cur>0?fmt(T.m):`<b>${fmt(T.m)}</b>`} m</div></div>${s}</div>`;
   // 滚轮下面固定高度的一行：正在爬的那座显示离顶多远，别的山显示"就爬它"
   const nextS=sts.find(st=>st[0]>cur&&!stSeen(st));
-  const actH=isAct?`<div class="sub">${nextS?`下一站「${esc(nextS[1])}」还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(nextS[0]-cur)} m</b>，`:''}离${T.n}的顶还有 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b>。每座山都从山脚爬起，爬够它的海拔就算登顶。同一条线爬几遍就算几遍，抱石每次按 ${BWALL} 米算。</div>`
+  const actH=isAct?`<div class="sub">${nextS?`下一站「${esc(nextS[1])}」还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(nextS[0]-cur)} m</b> · `:''}到顶 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b></div>`
     :`<button class="save" id="mGo">${cur>0?'接着爬它':doneN?'再爬一次':'就爬它'}</button>
-      <div class="sub">${E.explicit?`现在的${E.act}会停在 ${fmt(E.cur)} m，以后可以接着爬。`:E.cur>0?`现在的${E.act}是默认接上的，已经爬的 ${fmt(E.cur)} m 会算到${V}上。`:`现在的${E.act}还没开始爬，直接换成它。`}</div>`;
+      <div class="sub">${E.explicit?`${E.act}会停在 ${fmt(E.cur)} m。`:E.cur>0?`${E.act}是默认接上的；已爬的 ${fmt(E.cur)} m 会算给${V}。`:`${E.act}还没开始，直接换。`}</div>`;
   if(part&&$('mDeck')){$('mDeck').innerHTML=cardH;$('mAct').innerHTML=actH;$('mBig').textContent=fmt(total);syncBadge();return}
   const item=l=>{const c=E.cnt[l.n]||0,now=l.n===E.act,p=E.att[l.n],paused=!now&&p&&p.m>0;
     return`<button data-w="${l.n}" aria-label="${l.n}">${artSvg(l.n)}<i class="${now?'now':paused?'paused':c?'done':''}"></i></button>`};
   $('p-mount').innerHTML=`
-   <div class="row"><div class="eyebrow">累计爬升 · 从第一条线算起</div><button class="link" data-share="mount">分享</button></div>
+   <div class="row"><div class="eyebrow">累计爬升</div><button class="link" data-share="mount">分享</button></div>
    <div class="big" style="margin-top:8px"><span id="mBig">${fmt(total)}</span><small>m</small></div>
-   <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天，${data.climbs.length} 次攀爬${nTop?`，登顶 ${nTop} 次`:''}。`:'记下第一条线，就从山脚出发。'}</div>
-   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
+   <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天 · ${data.climbs.length} 次${nTop?` · 登顶 ${nTop} 次`:''}`:'记下第一条线，就从山脚出发。'}</div>
+   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)}—${lab(last.date)} · ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
      <div class="sub" style="margin-top:8px">${esc(un.s[3])}</div>
-     <div class="sub" style="margin-top:10px;color:var(--ink)">这段路：${stopSeg.d} 天 · ${stopSeg.n} 次攀爬 · ${fmt(stopSeg.m)} 米${stopSeg.gyms>1?` · 去了 ${stopSeg.gyms} 家岩馆`:''}${stopSeg.best?` · 最高完攀 ${stopSeg.best}`:''}</div>
-     ${stopSeg.name?`<div class="sub" style="margin-top:4px">爬得最多的是「${esc(stopSeg.name)}」，${stopSeg.cnt} 次。</div>`:''}</div>`:''}
+     <div class="sub" style="margin-top:10px;color:var(--ink)">${stopSeg.d} 天 · ${stopSeg.n} 次 · ${fmt(stopSeg.m)} m${stopSeg.gyms>1?` · ${stopSeg.gyms} 家馆`:''}${stopSeg.best?` · 最高 ${stopSeg.best}`:''}</div>
+     ${stopSeg.name?`<div class="sub" style="margin-top:4px">爬最多：${esc(stopSeg.name)} · ${stopSeg.cnt} 次</div>`:''}</div>`:''}
    <div id="mDeck" style="margin-top:12px">${cardH}</div>
-   <div class="row" style="margin-top:24px"><div class="eyebrow">滑动选一座山</div><button class="link" id="mBook">全部</button></div>
+   <div class="row" style="margin-top:24px"><div class="eyebrow">换一座山</div><button class="link" id="mBook">全部</button></div>
    <div class="wheelbox"><div class="wheel" id="wheel">${LANDMARKS.map(item).join('')}</div><b class="wptr"></b></div>
    <div class="legend" style="justify-content:center;margin-top:2px"><span><i class="wd now"></i>正在爬</span><span><i class="wd done"></i>登顶过</span><span><i class="wd paused"></i>暂停</span></div>
    <div id="mAct">${actH}</div>`;
@@ -1302,15 +1302,15 @@ function renderPyr(){
       <span>${ico(icon,12)}${label}</span><b>${gShow(t,obj.L.stable)}</b>
       <em>${obj.tries?`极限 ${gShow(t,obj.L.limit)}<br>完攀 ${obj.sends} 条`:'还没开始'}</em></button>`};
   const cards=`<div class="mcards${anyB?'':' two'}">${mcard('l','lead','lead','先锋')}${mcard('l','up','tr','上方保护')}${anyB?mcard('b','b','b','抱石'):''}</div>
-    <div class="sub" style="margin-top:8px">大数字是这个方式站稳的级别；极限是完攀过的最高一级。</div>`;
+    <div class="sub" style="margin-top:8px">大数字是站稳级别 · 极限是最高完攀</div>`;
   let gap='';
   if(pyrType!=='b'&&data.routes.some(r=>r.type==='l')){
     const CM=crossMode(),a=LD.L.stable,b=UP.L.stable;
     const gd=(a<0||b<0)?(a<0&&b<0?'两边都还没站稳':'有一边还没站稳'):(a-b===0?'两种方式在同一级':a>b?`先锋高 ${a-b} 级`:`上方保护高 ${b-a} 级`);
-    gap=`<h2>方式落差</h2><div class="sub">同一条线被两种方式爬过的对比，比跨方式比级别更可信。自保算在上方保护里。</div>
+    gap=`<h2>方式落差</h2><div class="sub">同一条线两种方式的对比；自保算上方保护。</div>
       <div class="card modegap">
         <div class="row2"><b>${GNAME.lead} ${gShow('l',a)}</b><em>· ${GNAME.up} ${gShow('l',b)}</em><em class="hd">${gd}</em></div>
-        <div class="sub" style="margin-top:8px">${CM.all.length?`有 ${CM.all.length} 条线两种方式都爬过${CM.rows.length?'，下面这几条的结果不一样':''}。`:'还没有同一条线两种方式的记录，上面的级别只能各自看。'}</div>
+        <div class="sub" style="margin-top:8px">${CM.all.length?`${CM.all.length} 条线两种方式都爬过${CM.rows.length?'，结果不同':''}`:'还没有两种方式的记录'}</div>
         ${CM.rows.slice(0,3).map(o=>`<div class="rrow plain"><span><b>${tape(o.r.name)}${esc(o.r.name)}</b><em>先锋 ${o.lc.length} 次${o.ls?' · 完攀':' · 没完攀'} · 上方保护 ${o.uc.length} 次${o.us?' · 完攀':' · 没完攀'}</em></span></div>`).join('')}
       </div>`;
   }
@@ -1318,9 +1318,9 @@ function renderPyr(){
    <div class="row"><div class="eyebrow">难度阶梯 · ${pyrType==='b'?'抱石':GNAME[pyrMode]}</div></div>
    ${cards}
    <div class="card" style="margin-top:14px">${rows||'<div class="sub">还没有记录。</div>'}</div>
-   <div class="legend"><span><i class="k"></i>一条完攀过的线</span><span><i class="k ghost"></i>冲 ${G[goal]} 之前建议补上的</span></div>
-   <div class="sub" style="margin-top:12px">同一条线重复爬只算一条。完攀 1 条算<b style="color:var(--ink)">解锁</b>，3 条算<b style="color:var(--ink)">站稳</b>，5 条算<b style="color:var(--ink)">吃透</b>，你的级别按站稳的那一级来算。难度按方式分开统计，不同方式的级别不能直接横比。</div>
-   ${badges?`<h2>同级名线</h2><div class="sub">每站稳一级，点亮一条纸面同级的野外名线。岩馆和野外的手感差很多，只当路标看。</div><div class="strip">${badges}</div>`:''}
+   <div class="legend"><span><i class="k"></i>完攀过</span><span><i class="k ghost"></i>建议补 ${G[goal]}</span></div>
+   <div class="sub" style="margin-top:12px">同一条线只算一条：1 条<b style="color:var(--ink)">解锁</b> · 3 条<b style="color:var(--ink)">站稳</b> · 5 条<b style="color:var(--ink)">吃透</b>；级别按站稳算。方式分开统计，不跨方式比。</div>
+   ${badges?`<h2>同级名线</h2><div class="sub">站稳一级，点亮一条同级野外名线；只当路标。</div><div class="strip">${badges}</div>`:''}
    ${gap}`}
 $('p-pyr').onclick=e=>{const b=e.target.closest('button[data-pt]');if(!b)return;pyrType=b.dataset.pt;if(b.dataset.pm)pyrMode=b.dataset.pm;renderPyr()};
 
@@ -1387,24 +1387,24 @@ function insights(S,P){const out=[],G=S.lv.G,bar=(l,v,t,on)=>`<div class="br${on
     out.push({s:100,k:'正在磕的线',v:S.proj.length,u:'条',c:`最近是「${esc(o.r.name)}」${short(o.r.grade)}`,
       t:one?`「${esc(o.r.name)}」${o.r.grade} ${MODE[o.lastMode]}磕了 ${o.seq.length} 次`:`你在磕 ${S.proj.length} 条线`,rid:one?o.r.id:null,
       pic:one?spark(o,300,74).replace('width="300" height="74"','width="100%"'):S.proj.map(x=>`<button class="prow" data-rid="${x.r.id}"><span><b>${tape(x.r)}${esc(x.r.name)}<i>${x.r.grade}</i></b><em>${multiGym?esc(x.r.gym)+' · ':''}${x.seq.length} 次</em></span>${spark(x,104,46)}</button>`).join(''),
-      n:`${one?'从左到右':'小图从左到右'}是每一次到的位置，虚线是顶，圆圈是 take 到顶。爬过 3 次以上、最近在用的方式还没完攀的线算在磕，最近爬过的排前面`})}
+      n:`小图是每次到的高度：虚线顶，圆圈 take。3 次以上、最近还没完攀的线算在磕`})}
   if(S.fall.n>=4){const f=S.fall,z=[['后段',f.hi],['中段',f.mid],['前段',f.lo]],top=[...z].sort((x,y)=>y[1]-x[1])[0],dom=top[1]/f.n,W=64;
     let g=`<svg viewBox="0 0 ${W} 112" width="${W}" height="112" fill="none" stroke-linecap="round"><path d="M4 104H${W-4}" stroke="var(--ink)" stroke-width="1.1"/><path d="M32 104V12" stroke="var(--hair)" stroke-width="1.6"/><path d="M8 73.3H${W-8}M8 42.7H${W-8}" stroke="var(--muted)" stroke-width=".7" stroke-dasharray="1 4"/>`;
     f.hs.forEach((h,i)=>{g+=cross(32+((i*37)%19-9),104-h*92,2.6,'var(--ink)',1.3)});
-    out.push({s:80,k:'掉在哪',v:dom>=.5?top[0]:'分散',u:'',c:dom>=.5?`${f.n} 次里 ${top[1]} 次`:`${f.n} 次，没有集中在哪一段`,t:dom>=.5?`掉下来的 ${f.n} 次里，多半在${top[0]}`:'掉下来的位置比较分散',
+    out.push({s:80,k:'掉在哪',v:dom>=.5?top[0]:'分散',u:'',c:dom>=.5?`${top[1]} / ${f.n} 次`:`${f.n} 次，比较分散`,t:dom>=.5?`多半在${top[0]}`:'位置比较分散',
       pic:`<div class="fallp">${g}</svg><div>${z.map(x=>bar(x[0],x[1]/f.n,x[1],x===top)).join('')}</div></div>`,n:top[0]==='后段'&&dom>=.5?'后段掉得多，通常是体力先到头':top[0]==='前段'&&dom>=.5?'前段就掉，多半是起步的难点或者没热开':''})}
   const wy=S.why;if(wy.n>=4){const seg=o=>`<div class="bar">${['pump','tech','head'].map(k=>o[k]?`<i class="${k}" style="flex:${o[k]}"></i>`:'').join('')}</div>`,two=S.whyHi.n>=3&&S.whyLo.n>=3;
-    out.push({s:90,k:'为什么 take / 掉',v:REASON[wy.top],u:'',c:`${wy.n} 次里 ${wy[wy.top]} 次`,t:`take 和掉的原因里，“${REASON[wy.top]}”最多`,
+    out.push({s:90,k:'为什么 take / 掉',v:REASON[wy.top],u:'',c:`${wy[wy.top]} / ${wy.n} 次`,t:`“${REASON[wy.top]}”最多`,
       pic:`<div class="why">${two?`<div class="k2">${G[S.lv.limit]} 及以上</div>${seg(S.whyHi)}<div class="k2">${G[S.lv.limit]} 以下</div>${seg(S.whyLo)}`:seg(wy)}<div class="keys">${['pump','tech','head'].map(k=>`<span><i class="${k}"></i>${REASON[k]} <b>${wy[k]}</b></span>`).join('')}</div></div>`,n:two&&S.whyHi.top!==S.whyLo.top?`极限难度上主要是“${REASON[S.whyHi.top]}”，以下主要是“${REASON[S.whyLo.top]}”`:''})}
   // 下面这些只做小格子
   const pw=P&&P.days>=3?P.perWeek:null;
-  out.push({s:60,k:'节奏',v:S.perWeek.toFixed(1),u:'次/周',c:(pw!=null?`${sign(S.perWeek-pw,.25)} 上个周期 ${pw.toFixed(1)}`:'')+(S.gap>1?`${pw!=null?' · ':''}最长隔 ${S.gap} 天`:'')});
-  if(S.n>=8)out.push({s:70,k:'完攀率',v:pct(S.rate),u:'%',c:`${S.n} 次里完攀 ${S.sends} 次`});
+  out.push({s:60,k:'节奏',v:S.perWeek.toFixed(1),u:'次/周',c:(pw!=null?`${sign(S.perWeek-pw,.25)} 上周期 ${pw.toFixed(1)}`:'')+(S.gap>1&&pw==null?`最长隔 ${S.gap} 天`:'')});
+  if(S.n>=8)out.push({s:70,k:'完攀率',v:pct(S.rate),u:'%',c:`${S.sends} / ${S.n} 次`});
   if(S.fl.send>=0&&S.fl.flash>=0){const d=S.fl.send-S.fl.flash;out.push({s:50,k:'一次过 → 完攀',v:d?short(G[S.fl.flash])+'→'+short(G[S.fl.send]):short(G[S.fl.send]),u:'',c:d?`一次过比完攀低 ${d} 级`:'一次过和完攀同级'})}
-  if(S.triesN>=3)out.push({s:40,k:'完攀一条线',v:S.tries.toFixed(1),u:'次',c:`${S.triesN} 条先锋线的平均`});
+  if(S.triesN>=3)out.push({s:40,k:'完攀一条线',v:S.tries.toFixed(1),u:'次',c:`${S.triesN} 条平均`});
   if(S.lines>=5)out.push({s:16,k:'新线',v:S.newLines+'/'+S.lines,u:'条',c:S.newLines===S.lines?'都是这段时间新爬的':'其余是之前就在爬的'});
-  if(S.below!=null&&S.leadN>=10)out.push({s:15,k:'打底的量',v:pct(S.below),u:'%',c:`先锋里 ${G[S.lv.stable]} 以下的占比`});
-  if(S.hangN>=4)out.push({s:14,k:'take 到顶',v:S.takes.toFixed(1),u:'次',c:`${S.hangN} 次里平均 take 的次数`});
+  if(S.below!=null&&S.leadN>=10)out.push({s:15,k:'打底的量',v:pct(S.below),u:'%',c:`${G[S.lv.stable]} 以下占比`});
+  if(S.hangN>=4)out.push({s:14,k:'take 到顶',v:S.takes.toFixed(1),u:'次',c:`${S.hangN} 次平均`});
   out.sort((x,y)=>y.s-x.s);const lead=out.find(x=>x.pic);return{lead,tiles:out.filter(x=>x!==lead)}}
 function reviewTop(){const gy=[...new Set(data.climbs.map(c=>R(c.rid).gym))];if(gymSel&&!gy.includes(gymSel))gymSel=null;
   return`<div class="row"><div class="pseg">${PERS.map(p=>`<button data-per="${p[0]}" class="${p[0]===perKey()?'on':''}">${p[1]}</button>`).join('')}</div>
@@ -1426,17 +1426,17 @@ function summary(S){const cs=scope(),all=data.climbs.filter(c=>!gymSel||R(c.rid)
    ${rest.length?`<div class="hchips">${rest.map(o=>`<button data-hero="${o.k}">${ico(o.k,12)}${ZNAME[o.k]}<b>${o.b?(o.k==='b'?o.b.r.grade:short(o.b.r.grade)):'—'}</b></button>`).join('')}</div>`:''}
    <div class="hsum"><b>${S.days}</b> 天<i>·</i><b>${S.lines}</b> 条线<i>·</i><b>${S.n}</b> 次攀爬<i>·</i><b>${fmt(S.m)}</b> m</div>`}
 function renderReview0(){
-  if(!data.climbs.length){$('p-review').innerHTML='<div class="eyebrow">迹</div><h1>还没有记录</h1><div class="sub">去爬几次，这里就会有东西可看。</div>';return}
+  if(!data.climbs.length){$('p-review').innerHTML='<div class="eyebrow">迹</div><h1>还没有记录</h1><div class="sub">去爬几次，这里就有东西看。</div>';return}
   const cs=scope(),S=stats(cs,perFrom()),pc=prevScope(),P=pc&&pc.length?stats(pc,null):null;if(P)P.perWeek=P.days/({'6w':6,'3m':90/7}[perKey()]);
   let h=reviewTop()+heat();
-  if(!cs.length){$('p-review').innerHTML=h+`<h2>${perName()}</h2><div class="sub">这段时间${gymSel?'在这家岩馆':''}没有记录。换一个周期看看。</div>`;return}
+  if(!cs.length){$('p-review').innerHTML=h+`<h2>${perName()}</h2><div class="sub">这段时间${gymSel?'在这家岩馆':''}没有记录，换个周期。</div>`;return}
   const I=insights(S,P),L=I.lead,tiles=insMore?I.tiles:I.tiles.slice(0,4);
-  h+=summary(S)+`<h2>看出来的</h2><div class="sub">按固定规则从${perName()==='到现在'?'全部':perName()}的记录里算，样本太少的不显示。</div>`;
+  h+=summary(S)+`<h2>看出来的</h2><div class="sub">按${perName()==='到现在'?'全部':perName()}记录算；样本少不显示</div>`;
   if(L)h+=`<div class="ins"${L.rid?` data-rid="${L.rid}"`:''}><h3>${L.t}</h3>${L.pic}${L.n?`<div class="n">${L.n}</div>`:''}</div>`;
   h+=`<div class="tiles">${tiles.map(t=>`<div class="tile"><div class="k">${t.k}</div><b${/\d/.test(t.v)?'':' class="w"'}>${t.v}<small>${t.u}</small></b><span>${String(t.c).split(' · ').map(x=>`<span class="nw">${x}</span>`).join(' · ')}</span></div>`).join('')}</div>`;
   if(I.tiles.length>4)h+=`<button class="link" id="insMore" style="margin-top:0">${insMore?'收起':`还有 ${I.tiles.length-4} 项`}</button>`;
-  if(S.days<3)h+=`<div class="sub" style="margin-top:12px">记录还少。多去几次，这里能看出来的东西会多起来。</div>`;
-  h+=`<h2>交给 AI 复盘</h2><div class="sub">上面这些数字会整理成一段话，你补一句这个周期想要什么，复制给任何一个 AI 助手。</div>
+  if(S.days<3)h+=`<div class="sub" style="margin-top:12px">记录还少，多爬几次再看。</div>`;
+  h+=`<h2>交给 AI 复盘</h2><div class="sub">把这段时间整理成一段话，补一句目标，复制给 AI。</div>
     <button class="ghostbtn" id="aiOpen">准备给 AI 的内容</button>`;
   $('p-review').innerHTML=h}
 function renderReview(){const w=$('hscroll'),keep=w?w.scrollLeft:null,yr=histSel&&histSel.slice(0,4);renderReview0();
