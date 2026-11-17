@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 16 16">
 <title>岩迹 · favicon</title>
-<rect width="256" height="256" fill="#F4F0E6"/>
-<rect x="41" y="30" width="46" height="198" rx="23" fill="#1F1D19"/><rect x="105" y="24" width="46" height="208" rx="23" fill="#1F1D19"/><rect x="169" y="30" width="46" height="198" rx="23" fill="#1F1D19"/>
-<rect x="22" y="166" width="212" height="46" rx="23" fill="#E2552B" transform="rotate(-28 22 188)"/>
+<rect width="16" height="16" fill="#F4F0E6"/>
+<path d="M3.7 13.2C4.2 11.6 5.3 10.4 6.7 10.1C8.1 9.8 9.1 8.9 9.5 7.6C9.9 6.3 10.5 4.9 11.6 3.1" stroke="#1F1D19" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+<circle cx="11.6" cy="3.1" r="2.3" fill="#E2552B"/>
 </svg>

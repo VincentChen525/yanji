@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 256 256"><title>岩迹 · 刻痕（深色底）</title><rect x="52" y="54" width="24" height="150" rx="12" fill="#F4F0E6"/><rect x="92" y="50" width="24" height="156" rx="12" fill="#F4F0E6"/><rect x="132" y="52" width="24" height="150" rx="12" fill="#F4F0E6"/><rect x="172" y="48" width="24" height="156" rx="12" fill="#F4F0E6"/><rect x="44" y="160" width="185.96" height="24" rx="12" fill="#E2552B" transform="rotate(-25.46 44 172)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 256 256">
+<title>岩迹 · 一条线路（深色底）</title>
+<defs><mask id="rh"><rect width="256" height="256" fill="#fff"/><circle cx="116" cy="170" r="5.4" fill="#000"/><circle cx="150" cy="124" r="5.4" fill="#000"/></mask></defs>
+<g mask="url(#rh)"><path d="M56.0 208.0C60.3 202.7 71.3 182.3 82.0 176.0C92.7 169.7 109.7 176.0 120.0 170.0C130.3 164.0 138.0 151.7 144.0 140.0C150.0 128.3 149.0 114.7 156.0 100.0C163.0 85.3 181.0 60.0 186.0 52.0" stroke="#F4F0E6" stroke-width="13" stroke-linecap="round" fill="none"/></g>
+<circle cx="116" cy="170" r="5.4" fill="none" stroke="#F4F0E6" stroke-width="3.4"/>
+<circle cx="150" cy="124" r="5.4" fill="none" stroke="#F4F0E6" stroke-width="3.4"/>
+<circle cx="186" cy="52" r="11" fill="#E2552B"/>
+</svg>

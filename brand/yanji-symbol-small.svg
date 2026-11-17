@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-<title>岩迹 · 刻痕（小尺寸）</title>
-<rect x="59.0" y="58" width="30" height="140" rx="15.0" fill="#1F1D19"/><rect x="111.0" y="54" width="30" height="146" rx="15.0" fill="#1F1D19"/><rect x="163.0" y="58" width="30" height="138" rx="15.0" fill="#1F1D19"/>
-<rect x="50" y="157" width="179" height="30" rx="15" fill="#E2552B" transform="rotate(-30 50 172)"/>
+<title>岩迹 · 一条线路（小尺寸）</title>
+<path d="M56.0 208.0C60.3 202.7 71.3 182.3 82.0 176.0C92.7 169.7 109.7 176.0 120.0 170.0C130.3 164.0 138.0 151.7 144.0 140.0C150.0 128.3 149.0 114.7 156.0 100.0C163.0 85.3 181.0 60.0 186.0 52.0" stroke="#1F1D19" stroke-width="22" stroke-linecap="round" fill="none"/>
+<circle cx="186" cy="52" r="14" fill="#E2552B"/>
 </svg>
