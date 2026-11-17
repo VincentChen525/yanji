@@ -55,6 +55,14 @@ h1{font-family:var(--serif);font-weight:600;font-size:30px;line-height:1.2;margi
 .link{font-size:12px;color:var(--muted);background:none;border:none;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-family:var(--sans);padding:12px 8px;margin:-12px -8px}
 .iconbtn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;margin:-8px -8px -8px 0;border:none;background:none;color:var(--muted);cursor:pointer;flex:none}
 .iconbtn svg{display:block;width:19px;height:19px}
+.sk{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn .sk{width:19px;height:19px}
+.sharebtn .sk{width:14px;height:14px;color:var(--muted)}
+.titleedit .sk{width:15px;height:15px}
+.shareBtns .sp{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.shareBtns .sp .sk{width:15px;height:15px}
+.shareTop .sk{width:18px;height:18px}
+.sk-sprite{position:absolute;width:0;height:0;overflow:hidden}
 .titleedit{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;margin-left:-2px;border:none;background:none;color:var(--muted);cursor:pointer;flex:none;opacity:.8}
 .titleedit svg{display:block;width:15px;height:15px}
 .titleedit:active{opacity:.45}
@@ -385,6 +393,13 @@ button:active:not(:disabled),label.ghostbtn:active{opacity:.6}
 </script>
 </head>
 <body>
+<svg class="sk-sprite" aria-hidden="true" focusable="false">
+  <symbol id="sk-back" viewBox="0 0 20 20"><path d="M14.4 3.4C10.4 5.4 6.8 8.1 3.2 10.2c3.7 1.9 7.2 4.5 11 6.3"/></symbol>
+  <symbol id="sk-close" viewBox="0 0 20 20"><path d="M4.2 4.2c2.9 2.4 6 5.5 9.6 9.8M13.9 4.3c-3 2.7-6.1 5.8-9.7 9.6"/></symbol>
+  <symbol id="sk-share" viewBox="0 0 16 16"><path d="M8.1 2.2c0 3.1.1 6.2 0 9.2M5.2 4.9C6.3 3.7 7.3 2.8 8.2 2.1c.9.8 1.8 1.7 3 2.7M2.9 8.4c-.1 2.1-.1 4.2 0 6.3 3.3.2 6.7.2 10 0 .1-2.1.1-4.2 0-6.3"/></symbol>
+  <symbol id="sk-pencil" viewBox="0 0 20 20"><path d="M12.9 3.1l4 4L7.2 16.8 3 17.1l.3-4.2zM11.2 4.8l4 4"/></symbol>
+  <symbol id="sk-gear" viewBox="0 0 20 20"><path d="M10 1.8l1.3 1.9 2.2-.5.7 2.1 2.1.7-.5 2.2 1.9 1.3-1.9 1.3.5 2.2-2.1.7-.7 2.1-2.2-.5L10 18.2l-1.3-1.9-2.2.5-.7-2.1-2.1-.7.5-2.2L2.3 10l1.9-1.3-.5-2.2 2.1-.7.7-2.1 2.2.5Z"/><circle cx="10" cy="10" r="2.9"/></symbol>
+</svg>
 <div class="phone" id="phone">
   <main>
     <section class="page on" id="p-today"></section>
@@ -405,10 +420,10 @@ button:active:not(:disabled),label.ghostbtn:active{opacity:.6}
   <div class="shareLayer" id="shareLayer" aria-hidden="true">
     <div class="sv" id="shareVeil"></div>
     <div class="shareSheet" id="shareSheet">
-      <div class="shareTop"><b id="shareTitle">分享</b><button id="shareClose">关闭</button></div>
+      <div class="shareTop"><b id="shareTitle">分享</b><button id="shareClose" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
       <div class="sharePreview"><canvas id="shareCanvas"></canvas></div>
       <div class="shareTip" id="shareTip">保存成图片，或直接分享给朋友</div>
-      <div class="shareBtns"><button class="sb" id="shareSave">保存图片</button><button class="sp" id="shareDo">分享</button></div>
+      <div class="shareBtns"><button class="sb" id="shareSave">保存图片</button><button class="sp" id="shareDo"><svg class="sk"><use href="#sk-share"/></svg>分享</button></div>
     </div>
   </div>
 
@@ -639,7 +654,7 @@ function renderToday(){
   const bl=best('l'),bb=best('b'),bestTxt=[bl&&short(bl.grade),bb&&bb.grade].filter(Boolean).join('<i>/</i>')||'—';
   const others=dates().reverse().filter(x=>x!==d),hasB=A.some(o=>o.type==='b');
   $('p-today').innerHTML=`
-   <div class="row"><div class="eyebrow">${lab(d)}${gym?' · '+esc(gym):''}</div>${isToday?'<button class="iconbtn" id="openSet" aria-label="设置" title="设置"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.8l1.3 1.9 2.2-.5.7 2.1 2.1.7-.5 2.2 1.9 1.3-1.9 1.3.5 2.2-2.1.7-.7 2.1-2.2-.5L10 18.2l-1.3-1.9-2.2.5-.7-2.1-2.1-.7.5-2.2L2.3 10l1.9-1.3-.5-2.2 2.1-.7.7-2.1 2.2.5Z"/><circle cx="10" cy="10" r="2.9"/></svg></button>':`<button class="link" id="back">${dayFrom==='review'?'回到迹':'回到今天'}</button>`}</div>
+   <div class="row"><div class="eyebrow">${lab(d)}${gym?' · '+esc(gym):''}</div>${isToday?'<button class="iconbtn" id="openSet" aria-label="设置" title="设置"><svg class="sk"><use href="#sk-gear"/></svg></button>':`<button class="iconbtn" id="back" aria-label="${dayFrom==='review'?'回到迹':'回到今天'}" title="${dayFrom==='review'?'回到迹':'回到今天'}"><svg class="sk"><use href="#sk-back"/></svg></button>`}</div>
    <h1>${isToday?'今天':lab(d)}，${A.length} 条线</h1>
    <div class="card">${chart(A)}
      <div class="legend" style="margin-top:12px"><span>${mk('s')} 完攀</span><span>${mk('a')} 一次过</span><span>${mk('h')} take</span><span>${mk('x')} 掉在这</span></div>
@@ -652,7 +667,7 @@ function renderToday(){
    ${A.length?`<div style="margin-top:8px">${A.map(o=>`<button class="rrow" data-rid="${o.id}" data-mode="${o.type==='b'?'':MODEG(o.mode)}"><span><b>${tape(o)}${esc(o.name)}</b><em>${meta(o)}</em></span><span class="gl">${o.cs.map(glyph).join('')}</span></button>`).join('')}</div>
      <div style="margin-top:14px">
        ${isToday&&cs.length?`<button class="link" id="undo" style="display:block;text-align:left;margin:0 0 10px -8px">撤销上一次</button>`:''}
-       <button class="sharebtn" data-share="day"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5v8.5M5 4.5L8 1.5l3 3M2.5 7.5v6h11v-6"/></svg>${isToday?'分享今天':'分享 '+lab(d)}</button>
+       <button class="sharebtn" data-share="day"><svg class="sk"><use href="#sk-share"/></svg>${isToday?'分享今天':'分享 '+lab(d)}</button>
      </div>`:''}
    ${isToday&&hasDemo()?'<div class="demo"><span>示例数据</span><button class="link" id="wipe">清空，记自己的</button></div>':''}
 `;
@@ -738,9 +753,9 @@ function renderRoute(){const r=R(curRid);if(!r){go('today');return}
     :`${meta(r)} · 爬了 ${all.length} 次 · ${status}`;
   const chips=rope&&groups.length>1?`<div style="margin-top:10px"><div class="pseg">${[['','全部 '+all.length]].concat(groups.map(g=>[g,GNAME[g]+' '+cnt(g)])).map(([k,t])=>`<button data-rs="${k}" class="${(routeSel||'')===k?'on':''}">${t}</button>`).join('')}</div></div>`:'';
   $('p-route').innerHTML=`
-   <div class="row"><button class="link" id="rback">‹ 返回</button><button class="iconbtn" data-share="route" aria-label="分享这条线" title="分享这条线"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5v8.5M5 4.5L8 1.5l3 3M2.5 7.5v6h11v-6"/></svg></button></div>
+   <div class="row"><button class="iconbtn" id="rback" aria-label="返回" title="返回"><svg class="sk"><use href="#sk-back"/></svg></button><button class="iconbtn" data-share="route" aria-label="分享这条线" title="分享这条线"><svg class="sk"><use href="#sk-share"/></svg></button></div>
    <div class="eyebrow" style="margin-top:14px">${esc(r.gym)} · ${lab(r.since)} 开始爬</div>
-   <h1 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tape(r,true)}${esc(r.name)}<button class="titleedit" id="rename" aria-label="改名" title="改名"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12.8 3.2l4 4L7 17H3v-4z"/><path d="M11.3 4.7l4 4"/></svg></button></h1>
+   <h1 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tape(r,true)}${esc(r.name)}<button class="titleedit" id="rename" aria-label="改名" title="改名"><svg class="sk"><use href="#sk-pencil"/></svg></button></h1>
    <div class="sub">${sub}</div>
    ${chips}
    <div class="card">${routeSvg(r,cs)}<div class="cap" id="rcap">${rope&&cs.length>1?'':'&nbsp;'}</div></div>
@@ -1204,7 +1219,7 @@ function renderMount(part){
   const item=l=>{const c=E.cnt[l.n]||0,now=l.n===E.act,p=E.att[l.n],paused=!now&&p&&p.m>0;
     return`<button data-w="${l.n}" aria-label="${l.n}">${artSvg(l.n)}<i class="${now?'now':paused?'paused':c?'done':''}"></i></button>`};
   $('p-mount').innerHTML=`
-   <div class="row"><div class="eyebrow">累计爬升</div><button class="link" data-share="mount">分享</button></div>
+   <div class="row"><div class="eyebrow">累计爬升</div><button class="iconbtn" data-share="mount" aria-label="分享这座山" title="分享这座山"><svg class="sk"><use href="#sk-share"/></svg></button></div>
    <div class="big" style="margin-top:8px"><span id="mBig">${fmt(total)}</span><small>m</small></div>
    <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天，${data.climbs.length} 次攀爬${nTop?`，登顶 ${nTop} 次`:''}。`:'记下第一条线，就从山脚出发。'}</div>
    ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
@@ -1232,7 +1247,7 @@ function bindWheel(){const w=$('wheel');if(!w)return;const E=expedition();wheelT
 function bookHtml(){const E=expedition();
   const cell=l=>{const c=E.cnt[l.n]||0,now=l.n===E.act,p=E.att[l.n],paused=!now&&p&&p.m>0,ls=E.summits.filter(x=>x.n===l.n).pop();
     return`<button class="stamp ${now?'now':c?'done':paused?'paused':'todo'}" data-peak="${l.n}">${artSvg(l.n)}<b>${l.n}</b><em>${now?'正在爬':paused?`停在 ${fmt(p.m)} m`:c?lab(ls.date)+' 登顶'+(c>1?' ×'+c:''):fmt(l.m)+' m'}</em></button>`};
-  return`<div class="row"><div class="eyebrow">登顶册</div><button class="link" id="close">完成</button></div>
+  return`<div class="row"><div class="eyebrow">登顶册</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
     <div class="sub" style="margin-top:6px">点一座看详情，也可以选它来爬。</div>
     <div class="lbl">建筑 · 按高度</div><div class="stamps">${LANDMARKS.filter(l=>l.t==='b').map(cell).join('')}</div>
     <div class="lbl">山 · 按海拔</div><div class="stamps">${LANDMARKS.filter(l=>l.t==='m').map(cell).join('')}</div>`}
@@ -1243,7 +1258,7 @@ function peakHtml(){const n=bookSel,E=expedition(),h=HT[n],now=n===E.act,p=E.att
   const X2=expData(),sts2=stopsOf(n),summited=(E.cnt[n]||0)>0,gotN=sts2.filter(st=>X2.stops[n+'|'+st[0]]||summited).length;
   const stopsHtml=sts2.length?`<div class="lbl">路上 · ${gotN}/${sts2.length} 个观景台</div>${sts2.map(st=>{const got=X2.stops[n+'|'+st[0]],ok=got||summited;
     return `<div class="rrow plain"><span><b>${ok?'● ':'○ '}${esc(st[1])}</b><em>${fmt(st[0])} m · ${esc(st[2])}${got?' · '+lab(got.d)+' 到':''}</em></span></div>`}).join('')}`:'';
-  return`<div class="row"><button class="link" id="toBook">‹ 登顶册</button><button class="link" id="close">完成</button></div>
+  return`<div class="row"><button class="link" id="toBook" style="display:inline-flex;align-items:center;gap:4px"><svg class="sk" style="width:14px;height:14px"><use href="#sk-back"/></svg>登顶册</button><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
     <div class="peak">${artSvg(n,true)}<div><div class="mname">${n}</div><div class="mnum" style="margin-top:4px">${LANDMARKS.find(l=>l.n===n).c}</div><div class="mnum" style="margin-top:4px">${LANDMARKS.find(l=>l.n===n).t==='b'?'高':'海拔'} <b>${fmt(h)}</b> m</div></div></div>
     ${rows}${cur}${stopsHtml}${!rows&&!cur?'<div class="sub" style="margin-top:6px">还没爬过。</div>':''}
     <div class="sub" style="margin-top:12px;padding:12px;border:1px dashed var(--hair);border-radius:12px">真实照片和路书，之后会放在这里。</div>
@@ -1530,14 +1545,14 @@ function renderSheet(){
   if(mode==='peak'){el.innerHTML=peakHtml();return}
   if(mode==='routes'){
     const live=bookLive(),dead=bookDead();
-    el.innerHTML=`<div class="row"><div class="eyebrow">线路簿</div><button class="link" id="close">完成</button></div>
+    el.innerHTML=`<div class="row"><div class="eyebrow">线路簿</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
       <div class="sub" style="margin-top:6px">${esc(data.gym)} · 一共 ${live.length+dead.length} 条线。点一条看详情。</div>
       <input class="field" id="bookQ" placeholder="找一条线：名字或难度" maxlength="24" value="${esc(routeBookQ)}">
       <div id="bookList">${bookListHtml()}</div>`;
     const q=$('bookQ');if(q)q.oninput=e=>{routeBookQ=e.target.value;const bl=$('bookList');if(bl)bl.innerHTML=bookListHtml()};
     return}
   if(mode==='set'){el.innerHTML=`
-    <div class="row"><div class="eyebrow">设置</div><button class="link" id="close">完成</button></div>
+    <div class="row"><div class="eyebrow">设置</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
     <div class="lbl">岩馆</div>
     <button class="ghostbtn" id="gymBtn">${data.gym?esc(data.gym)+' · 切换或添加':'添加岩馆'}</button>
     <div class="lbl">线路</div>
@@ -1557,11 +1572,11 @@ function renderSheet(){
     ${a.lock?`<div class="lock" id="lock">${lockSvg(a.yes)}</div><div class="sub" style="text-align:center">按住黑色锁套，往左拧开</div><button class="ghostbtn" id="askNo">${a.no||'取消'}</button>`
       :`<div class="two"><button class="ghostbtn" id="askNo">${a.no||'取消'}</button><button class="save" id="askYes">${a.yes||'确定'}</button></div>`}`;bindLock();return}
   if(mode==='gymf'){const gy=data.gyms.map(g=>{const cs=data.climbs.filter(c=>R(c.rid).gym===g.name);return{n:g.name,c:cs.length,d:new Set(cs.map(c=>c.date)).size,m:meters(cs)}}).filter(g=>g.c).sort((a,b)=>b.m-a.m);
-    el.innerHTML=`<div class="row"><div class="eyebrow">只看哪家岩馆</div><button class="link" id="close">取消</button></div>
+    el.innerHTML=`<div class="row"><div class="eyebrow">只看哪家岩馆</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
      <div class="gfl"><button data-gf="" class="${gymSel?'':'on'}"><span>全部岩馆</span><em>${dates().length} 天 · ${data.climbs.length} 次</em></button>
        ${gy.map(g=>`<button data-gf="${esc(g.n)}" class="${g.n===gymSel?'on':''}"><span>${esc(g.n)}</span><em>${g.d} 天 · ${g.c} 次 · ${fmt(g.m)} m</em></button>`).join('')}</div>`;return}
   if(mode==='ai'){const A=data.ai||(data.ai={goal:'',limit:''}),has=t=>(A.goal||'').split('、').includes(t);
-    el.innerHTML=`<div class="row"><div class="eyebrow">交给 AI 复盘</div><button class="link" id="close">关闭</button></div>
+    el.innerHTML=`<div class="row"><div class="eyebrow">交给 AI 复盘</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
      <div class="lbl">这个周期想要什么（可不填）</div>
      <div class="aichips">${aiGoals().map(t=>`<button data-goal="${esc(t)}" class="${has(t)?'on':''}">${esc(t)}</button>`).join('')}</div>
      <input class="field" id="aiGoal" placeholder="点上面的，或者自己写" maxlength="60" value="${esc(A.goal||'')}">
@@ -1574,12 +1589,12 @@ function renderSheet(){
     $('aiGoal').oninput=e=>{A.goal=e.target.value;up();el.querySelectorAll('[data-goal]').forEach(x=>x.classList.toggle('on',has(x.dataset.goal)))};
     $('aiLimit').oninput=e=>{A.limit=e.target.value;up()};return}
   if(mode==='gym'){el.innerHTML=`
-    <div class="row"><div class="eyebrow">今天在哪家岩馆</div><button class="link" id="close">取消</button></div>
+    <div class="row"><div class="eyebrow">今天在哪家岩馆</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
     ${data.gyms.length?`<div class="seg col">${data.gyms.map((g,i)=>`<button data-gym="${i}" class="${g.name===data.gym?'on':''}">${esc(g.name)}</button>`).join('')}</div>`:'<div class="sub" style="margin-top:12px">先告诉我岩馆的名字，线路会按岩馆分开存。</div>'}
     <input class="field" id="gymName" placeholder="新岩馆的名字" maxlength="20">
     <button class="ghostbtn" id="gymAdd">添加并切换到它</button>`;return}
   if(mode==='draw'){el.innerHTML=`
-    <div class="row"><div class="eyebrow">画出这条线的走向</div><button class="link" id="drawBack">返回</button></div>
+    <div class="row"><div class="eyebrow">画出这条线的走向</div><button class="iconbtn" id="drawBack" aria-label="返回" title="返回"><svg class="sk"><use href="#sk-back"/></svg></button></div>
     <div class="pad" id="pad"${padPhoto?` style="background:var(--paper) url(${padPhoto}) center/cover no-repeat"`:''}><svg><polyline id="padLine" fill="none" stroke="${padPhoto?'var(--accent)':'var(--ink)'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="sub" style="margin-top:8px">用手指从地面一笔画到顶，横移和拐弯都可以画出来。也可以先拍一张岩壁照片垫在下面描；照片只用来描线，不会保存。画一次，这条线以后都用这个形状。</div>
     <div class="sub" id="drawErr" style="color:var(--ink)"></div>
@@ -1587,7 +1602,7 @@ function renderSheet(){
     <div class="two"><button class="ghostbtn" id="drawAuto">用自动的线</button><button class="save" id="drawOk">用这条线</button></div>`;
     bindPad();return}
   if(mode==='pick'){const A=active();el.innerHTML=`
-    <div class="row"><div class="eyebrow">记一条线</div><button class="link" id="close">取消</button></div>
+    <div class="row"><div class="eyebrow">记一条线</div><button class="iconbtn" id="close" aria-label="关闭" title="关闭"><svg class="sk"><use href="#sk-close"/></svg></button></div>
     <button class="gymchip" id="gymBtn">${esc(data.gym)} ›</button>
     <div class="row" style="margin-top:14px"><div class="lbl" style="margin-top:0">这里在爬的线</div><button class="link" id="openBook">线路簿</button></div>
     <div style="max-height:300px;overflow-y:auto">${A.map(r=>{const cs=climbsOf(r.id);return`<button class="rrow" data-pick="${r.id}"><span><b>${tape(r)}${esc(r.name)}</b><em>${meta(r)} · ${lab(r.since)} 起</em></span><span class="gl">${cs.slice(-5).map(glyph).join('')}</span></button>`}).join('')}</div>
@@ -2048,7 +2063,7 @@ function shareImageFallback(){
   d.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(25,22,17,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px;';
   const img=document.createElement('img');img.src=shareDataURL;img.alt='岩迹分享卡';img.style.cssText='max-width:92vw;max-height:74vh;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.4);display:block';
   const tip=document.createElement('div');tip.textContent='长按图片保存到相册；电脑可右键另存为';tip.style.cssText='color:#F4F0E6;font:13px -apple-system,sans-serif;text-align:center';
-  const btn=document.createElement('button');btn.textContent='关闭';btn.style.cssText='height:42px;padding:0 26px;border-radius:21px;border:1px solid rgba(244,240,230,.6);background:none;color:#F4F0E6;font:14px -apple-system,sans-serif;';
+  const btn=document.createElement('button');btn.innerHTML='<svg class="sk"><use href="#sk-close"/></svg>';btn.setAttribute('aria-label','关闭');btn.title='关闭';btn.style.cssText='height:42px;padding:0 26px;border-radius:21px;border:1px solid rgba(244,240,230,.6);background:none;color:#F4F0E6;font:14px -apple-system,sans-serif;';
   btn.onclick=()=>d.remove();
   d.onclick=e=>{if(e.target===d)d.remove()};
   d.append(img,tip,btn);document.body.appendChild(d);
