@@ -30,6 +30,7 @@ body{background:#E7E1D3;font-family:var(--sans);color:var(--ink);display:flex;al
 .phone{width:100%;max-width:390px;height:100%;max-height:844px;background:var(--paper);position:relative;overflow:hidden;overflow:clip;display:flex;flex-direction:column}
 @media(min-width:500px){.phone{border-radius:38px;box-shadow:0 30px 80px rgba(60,50,30,.25);border:1px solid #cfc7b4}}
 main{flex:1;overflow-y:auto;padding:calc(22px + env(safe-area-inset-top)) 24px calc(184px + env(safe-area-inset-bottom))}
+.phone.no-fab main{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 .page{display:none}.page.on{display:block}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
 h1{font-family:var(--serif);font-weight:600;font-size:30px;line-height:1.2;margin:8px 0 4px}
@@ -94,7 +95,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .wheel i.now,.wd.now{background:var(--ink)}.wheel i.done,.wd.done{background:var(--accent)}.wheel i.paused,.wd.paused{border:1.2px solid var(--ink)}
 .legend i.wd{margin:0}
 .wptr{position:absolute;left:50%;top:0;width:0;height:0;margin-left:-5px;border:5px solid transparent;border-top:6px solid var(--ink);pointer-events:none}
-#mAct{margin-top:12px;min-height:112px}#mAct .save{margin-top:0}#mAct .save+.sub{margin-top:8px}
+#mAct{margin-top:12px}#mAct .save{margin-top:0}#mAct .save+.sub{margin-top:8px}
 .stamps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;margin-top:12px}
 .stamp{text-align:center;color:var(--ink)}.stamp svg{display:block;width:100%;height:62px;margin:0 auto 4px}
 .stamp b{display:block;font-family:var(--serif);font-size:12px;font-weight:600;line-height:1.3}
@@ -1171,6 +1172,7 @@ function renderMount(part){
   s+=`<path ${art2} stroke="var(--hair)"/><path ${art} stroke="var(--hair)"/><g clip-path="url(#mClip)"><path ${art2} stroke="var(--muted)" opacity=".8"/><path ${art} stroke="var(--muted)"/></g>`;
   s+=`<line x1="4" x2="${W-4}" y1="${yG}" y2="${yG}" stroke="var(--ink)" stroke-width="1.1"/>`;
   s+=`<line x1="${topL?4:PX+16}" x2="${topL?PX-16:W-4}" y1="${yG-hh}" y2="${yG-hh}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="1 4"/><text x="${topL?4:W-4}" y="${yG-hh-6}" font-size="10" text-anchor="${topL?'start':'end'}" fill="var(--muted)">顶 ${fmt(T.m)} m</text>`;
+  if(cur>0&&T.m-cur>0.5)s+=`<text x="${topL?4:W-4}" y="${yG-hh+8}" font-size="9" text-anchor="${topL?'start':'end'}" fill="var(--accent)">还差 ${fmt(T.m-cur)} m</text>`;
   s+=`<text x="4" y="${yG+16}" font-size="10" fill="var(--muted)">0 m</text>`;
   let d='';const st=Math.max(.5,cur/200);for(let m=0;m<cur;m+=st)d+=(m?'L':'M')+rx(m).toFixed(1)+' '+y(m).toFixed(1);
   d+=(d?'L':'M')+rx(cur).toFixed(1)+' '+y(cur).toFixed(1);
@@ -1191,7 +1193,8 @@ function renderMount(part){
     if(ly<prevLy+11)ly=prevLy+11;prevLy=ly;
     const right=m.xx<W/2,lx=right?m.xx+7:m.xx-7;
     if(Math.abs(ly-(m.yy+3.4))>0.5)s+=`<path d="M${m.xx.toFixed(1)} ${(m.yy+(right?2:-2)).toFixed(1)}L${lx.toFixed(1)} ${(ly-3).toFixed(1)}" stroke="var(--hair)" stroke-width=".7"/>`;
-    s+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="10" text-anchor="${right?'start':'end'}" fill="${m.done?'var(--ink)':'var(--muted)'}">${esc(m.st[1])}${m.isNext?` · ${fmt(m.st[0])} m`:''}</text>`});
+    s+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="10" text-anchor="${right?'start':'end'}" fill="${m.done?'var(--ink)':'var(--muted)'}">${esc(m.st[1])}${m.isNext?` · ${fmt(m.st[0])} m`:''}</text>`;
+    if(m.isNext&&isAct)s+=`<text x="${lx.toFixed(1)}" y="${(ly+11).toFixed(1)}" font-size="9" text-anchor="${right?'start':'end'}" fill="var(--accent)">还差 ${fmt(m.st[0]-cur)} m</text>`});
   if(whole)s+=`<path d="M${PX} ${yG-hh}v-13l9 3.2l-9 3.2" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>`;
   if(isAct||cur>0)s+=`<g id="mMan" transform="translate(${rx(cur).toFixed(1)} ${(y(cur)-7).toFixed(1)})"><g transform="scale(1.5)"><circle cy="-9.2" r="2.4" fill="var(--ink)"/><path id="mPose" d="${POSE[0]}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
     <text x="${lblR?16:-16}" y="-2" font-size="11" text-anchor="${lblR?'start':'end'}" fill="var(--ink)">${isAct?'你在这里':'停在这里'}</text></g>`;
@@ -1210,10 +1213,8 @@ function renderMount(part){
   const cardH=`<div class="card" id="mCard" style="padding:16px 12px 8px;margin-top:0">
      <div class="row" style="align-items:flex-end;padding:0 4px"><div><div class="eyebrow"${isAct?'':' style="color:var(--ink)"'}>${isAct?`正在爬 · 第 ${nTop+1} 座`:cur>0?'暂停中':doneN?`登顶过${doneN>1?' '+doneN+' 次':''} · ${lab(lastS.date)}`:'还没爬过'}</div><div class="mname">${T.n}</div></div>
        <div class="mnum">${isAct||cur>0?`<b>${fmt(cur)}</b> / `:''}${isAct||cur>0?fmt(T.m):`<b>${fmt(T.m)}</b>`} m</div></div>${s}</div>`;
-  // 滚轮下面固定高度的一行：正在爬的那座显示离顶多远，别的山显示"就爬它"
-  const nextS=sts.find(st=>st[0]>cur&&!stSeen(st));
-  const actH=isAct?`<div class="sub">${nextS?`下一站「${esc(nextS[1])}」还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(nextS[0]-cur)} m</b> · `:''}到顶还差 <b style="color:var(--ink);font-family:var(--mono)">${fmt(left)} m</b></div>`
-    :`<button class="save" id="mGo">${cur>0?'接着爬它':doneN?'再爬一次':'就爬它'}</button>
+  // 正在爬时，距离已经写进山图；别的山显示"就爬它"
+  const actH=isAct?'':`<button class="save" id="mGo">${cur>0?'接着爬它':doneN?'再爬一次':'就爬它'}</button>
       <div class="sub">${E.explicit?`${E.act}会停在 ${fmt(E.cur)} m。`:E.cur>0?`${E.act}是默认接上的；已爬的 ${fmt(E.cur)} m 会算给${V}。`:`${E.act}还没开始，直接换。`}</div>`;
   if(part&&$('mDeck')){$('mDeck').innerHTML=cardH;$('mAct').innerHTML=actH;$('mBig').textContent=fmt(total);syncBadge();return}
   const item=l=>{const c=E.cnt[l.n]||0,now=l.n===E.act,p=E.att[l.n],paused=!now&&p&&p.m>0;
@@ -1792,7 +1793,7 @@ $('veil').onclick=()=>{cancelStrip();closeSheet();renderAll()};
 let page='today';
 function syncFab(){$('fab').style.display=page==='today'&&(!viewDate||viewDate===TODAY)?'':'none'}
 function renderAll(){renderToday();renderMount();renderPyr();renderReview();if(page==='route')renderRoute()}
-function go(p){playTok++;if(p!=='mount'||page!=='mount')mountView=null;page=p;renderAll();document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
+function go(p){playTok++;if(p!=='mount'||page!=='mount')mountView=null;page=p;const ph=document.getElementById('phone');if(ph)ph.classList.toggle('no-fab',p!=='today');renderAll();document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
   document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.p===(p==='route'?backTo:p)));
   syncFab();document.querySelector('main').scrollTop=0;if(p==='mount'){wheelTo(expedition().act,false);mountAnim()}if(p==='review')heatTo()}
 $('nav').onclick=e=>{const b=e.target.closest('button');if(b){if(b.dataset.p==='today'){viewDate=null;dayFrom='today'}go(b.dataset.p)}};
