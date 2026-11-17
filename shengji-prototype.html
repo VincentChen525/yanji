@@ -1893,7 +1893,7 @@ function drawReceipt(ctx,D){
   const iy=y+310;ctx.fillStyle='#F4EFDF';ctx.fillRect(x+18,iy,w-36,54);ctx.fillStyle=SHARE_ACC;ctx.fillRect(x+18,iy,2,54);
   const lines=sWrap(ctx,D.insight,w-60).slice(0,2);lines.forEach((l,i)=>sText(ctx,l,x+30,iy+21+i*17,11,SHARE_INK));
   sDash(ctx,x+18,y+382,x+w-18,y+382,'#CFC8B8');
-  sText(ctx,'本周累计攀爬 '+D.week+' 次',x+22,y+408,9,SHARE_MUTED);sText(ctx,'累计攀爬 '+D.total+' 次',x+w-22,y+408,9,SHARE_MUTED,'right');
+  sText(ctx,'本周累计攀爬 '+D.week+' 次线路',x+22,y+408,9,SHARE_MUTED);sText(ctx,'累计攀爬 '+D.total+' 次线路',x+w-22,y+408,9,SHARE_MUTED,'right');
   // 条形码
   ctx.save();ctx.globalAlpha=.8;for(let i=0,xx=x+30;xx<x+w-30;i++){const bw2=[1,2,1,3,1,2][i%6];ctx.fillStyle=SHARE_INK;ctx.fillRect(xx,y+428,bw2,18);xx+=bw2+3}ctx.restore();
   sText(ctx,'谢谢攀爬 · 下次再来',W/2,y+470,9,SHARE_MUTED,'center');
