@@ -160,16 +160,20 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .bookrow .bookopen em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bookact{flex:none;border:1px solid var(--hair);background:none;border-radius:14px;padding:5px 11px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}
 .bookact:active{opacity:.6}
-/* 新建线：颜色 + 名字两步 */
-.namefield{width:100%;margin-top:8px;min-height:46px;border-radius:12px;border:1px solid var(--hair);background:var(--paper);
-  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;font:inherit;font-size:15px;color:var(--ink);cursor:pointer}
-.namefield.empty{color:var(--muted)}
-.namefield .nfchev{color:var(--muted);font-family:var(--mono)}
-.colgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
-.colbtn{display:flex;align-items:center;gap:8px;border:1px solid var(--hair);border-radius:12px;background:var(--paper);
-  padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
-.colbtn.on{box-shadow:inset 0 0 0 1.4px var(--ink)}
-.colbtn .tape.big{width:26px;height:11px;margin-right:2px}
+/* 新建线：名字左边是颜色滚轮，右边是名字 */
+.namerow{display:flex;gap:14px;align-items:center;margin-top:8px}
+.colwheel{flex:none;width:76px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.cwbox{position:relative;height:104px;width:100%;border:1px solid var(--hair);border-radius:12px;background:var(--paper);overflow:hidden;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(to bottom,transparent,#000 22%,#000 78%,transparent)}
+.cw{height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:35px 0;scrollbar-width:none}
+.cw::-webkit-scrollbar{display:none}
+.colchip{display:flex;align-items:center;justify-content:center;width:100%;height:34px;border:none;background:none;cursor:pointer;
+  scroll-snap-align:center;opacity:calc(.22 + .78*var(--k,0));transform:scale(calc(.66 + .34*var(--k,0)))}
+.colchip .tape{width:34px;height:13px;margin:0}
+.colchip.none{font-family:var(--serif);font-size:10px;color:var(--muted)}
+.cwname{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.namecol{flex:1;min-width:0}
+.namecol .field{margin-top:0;height:46px}
 /* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
 .stripLayer{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:26px;
   background:rgba(244,240,230,.55);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
@@ -690,48 +694,96 @@ function mergeRoutes(a,b){const first=x=>{const c=climbsOf(x.id)[0];return c?c.t
   keep.retired=false;if(!keep.shape&&gone.shape)keep.shape=gone.shape;if(gone.since<keep.since)keep.since=gone.since;if(!gone.demo)delete keep.demo;
   data.routes=data.routes.filter(x=>x.id!==gone.id);curRid=keep.id;persist()}
 function openRoute(rid,group){curRid=rid;routeSel=group||null;if(page!=='route')backTo=page;go('route')}
-// 颜色 + 名字两步的结果：名字 = 颜色 + 空格 + 可选后缀
-function applyName(){const k=pickColorKey;if(!k)return;draft.color=k;const suf=nameDraft.trim();draft.name=colorWord(k)+(suf?' '+suf:'')}
 // 装回去：先查有没有同名的线在爬（两条一模一样的线没法区分，需要合并或改名）
 function restoreRoute(r){const t=twinOf(r);
   if(t&&!t.retired){ask({title:'有一条同名的线正在爬',body:`「${esc(t.name)} · ${meta(t)}」现在有一条在爬（${lab(t.since)} 开始爬，${climbsOf(t.id).length} 次）。两条一模一样的线没法区分，所以装回去之前要选一个：<br><br>它们其实是同一条，就合并成一条。是两条不同的线，就给这条改个名。`,
     yes:'合并成一条',no:'改个名再装回去',onYes:()=>{mergeRoutes(r,t);closeSheet();renderAll()},onNo:()=>renameAsk(r,true)});return}
   r.retired=false;persist();
   if(mode==='routes')renderSheet();else{mode='pick';closeSheet();renderAll()}}
-/* ---------- 拆线：全屏居中层 + 电动螺丝刀把岩点上的 M10 螺丝拧下来（螺丝带磁，被批头吸走） ---------- */
-let stripRid=null,stripBack=null,stripTimer=null,stripVib=null;
-function startStrip(rid,back){
-  stripRid=rid;stripBack=back||null;
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches){finishStrip();return}
-  const r=R(rid),layer=$('stripLayer');
-  layer.innerHTML=`<div class="stripCard" id="stripwrap">
+
+/* ---------- 拆线的岩点类型：几何 + 螺丝锚点 + 可选的颜色笔触 ----------
+   颜色是独立的一层（淡彩 + 手绘笔触），所以"类型 × 颜色"不用逐个画皮肤。 */
+const HOLD_TYPES=[
+ {id:'jug',n:'大把手',w:3,bolt:{x:194,y:72},screw:{x:104,y:156},
+  outline:'M96 62C104 46 122 36 142 34C166 31 188 40 200 56C210 70 214 88 211 104C208 122 198 140 184 154C170 168 152 176 136 174C118 172 100 162 90 146C80 130 78 110 84 92C87 82 91 71 96 62Z',
+  detail:['M102 70C110 56 126 47 144 45','M92 146C108 158 130 164 152 160'],
+  marks:['M106 92C112 84 120 80 128 79','M104 112C108 116 114 119 120 120']},
+ {id:'pocket',n:'口袋',w:3,bolt:{x:196,y:72},screw:{x:92,y:156},
+  outline:'M100 66C106 52 120 42 138 38C158 34 180 40 194 54C206 66 213 84 214 100C215 120 208 140 196 154C184 168 168 178 150 180C132 182 114 177 100 166C86 155 78 138 78 120C78 102 84 82 96 70C97 69 99 67 100 66Z',
+  detail:['M106 74C116 60 132 52 148 50C166 48 184 55 196 66','M112 82C118 77 125 74 132 73',
+    'M138 116m-36 0a36 27 0 1 0 72 0a36 27 0 1 0-72 0','M134 111m-25 0a25 18 0 1 0 50 0a25 18 0 1 0-50 0',
+    'M112 128a28 28 0 0 0 25 9','M120 122a24 24 0 0 0 14 6'],
+  marks:['M108 96C114 88 124 84 134 84']},
+ {id:'two',n:'两指口袋',w:2,bolt:{x:192,y:66},screw:{x:92,y:150},
+  outline:'M96 70C102 54 118 42 138 38C160 34 182 42 196 56C208 68 214 86 213 104C212 124 204 144 190 158C176 172 158 178 140 176C120 174 100 164 88 148C76 132 74 110 80 92C84 82 90 75 96 70Z',
+  detail:['M102 78C112 62 128 54 146 52C164 50 182 58 194 70',
+    'M96 116C96 104 104 96 114 96C123 96 130 102 134 110C138 102 145 96 154 96C164 96 172 104 172 116C172 128 164 136 154 136C145 136 138 130 134 122C130 130 123 136 114 136C104 136 96 128 96 116Z',
+    'M114 116m-11 0a11 12 0 1 0 22 0a11 12 0 1 0-22 0','M154 116m-11 0a11 12 0 1 0 22 0a11 12 0 1 0-22 0'],
+  marks:['M110 88C116 82 124 79 132 79','M150 88C156 82 164 79 172 79']},
+ {id:'mono',n:'单指洞',w:2,bolt:{x:194,y:74},screw:{x:108,y:150},
+  outline:'M108 62C116 48 132 40 150 40C170 40 190 50 200 66C210 82 212 102 206 120C200 140 186 156 168 166C150 176 130 174 114 164C98 154 88 136 86 116C84 96 92 78 108 62Z',
+  detail:['M114 72C122 57 136 50 152 50C170 50 186 59 195 73','M128 112m-17 0a17 17 0 1 0 34 0a17 17 0 1 0-34 0',
+    'M130 110m-10 0a10 10 0 1 0 20 0a10 10 0 1 0-20 0','M120 122a18 18 0 0 0 16 7'],
+  marks:['M104 92C108 84 114 78 122 75']},
+ {id:'crimp',n:'边条',w:3,bolt:{x:196,y:96},screw:{x:112,y:110},
+  outline:'M74 86C80 76 92 70 108 68C132 65 158 65 178 70C196 74 208 82 212 92C215 99 213 106 206 110C196 116 184 119 170 120C150 121 130 120 112 117C94 114 80 106 74 96C72 92 72 89 74 86Z',
+  detail:['M80 84C90 76 104 72 120 71C142 69 164 70 180 74','M88 112C112 119 146 121 178 113'],
+  marks:['M100 84C112 79 126 77 138 77','M152 78C164 79 174 82 182 87']},
+ {id:'sloper',n:'斜面',w:2,bolt:{x:192,y:120},screw:{x:112,y:136},
+  outline:'M82 130C82 114 94 100 112 90C132 79 158 76 180 82C200 87 214 98 216 112C217 124 210 134 198 141C182 150 162 154 140 153C116 152 96 144 82 130Z',
+  detail:['M92 124C96 106 110 94 128 87C148 79 170 80 188 88','M96 138C110 146 130 150 150 150'],
+  marks:['M108 116C116 104 130 97 144 94','M116 130C128 122 140 118 152 118']},
+ {id:'pinch',n:'捏点',w:2,bolt:{x:156,y:62},screw:{x:110,y:158},
+  outline:'M118 40C138 36 158 44 168 58C178 72 178 88 170 102C164 112 162 122 168 134C176 150 170 168 154 178C138 188 116 188 102 176C88 164 84 144 92 128C98 116 96 106 90 96C82 82 82 66 92 54C100 44 108 41 118 40Z',
+  detail:['M110 52C120 45 132 44 142 49','M140 68C134 82 133 100 136 116C139 132 138 148 132 162',
+    'M148 68C142 82 141 100 144 116C147 132 146 148 140 162'],
+  marks:['M106 76C110 68 116 62 124 58']},
+ {id:'chip',n:'小点',w:1,bolt:{x:162,y:110},screw:null,
+  outline:'M120 142C112 130 114 114 126 104C138 94 156 92 168 100C178 107 182 120 176 132C170 144 154 152 140 150C130 149 124 146 120 142Z',
+  detail:['M126 112C132 104 142 100 152 101','M128 138C136 144 148 145 158 140'],
+  marks:['M130 120C136 112 146 108 156 109']}
+];
+let lastHoldIdx=-1;
+function pickHold(){const pool=[];HOLD_TYPES.forEach((h,i)=>{for(let j=0;j<(h.w||1);j++)pool.push(i)});
+  let i=pool[Math.floor(Math.random()*pool.length)],g=0;
+  while(pool.length>1&&i===lastHoldIdx&&g++<12)i=pool[Math.floor(Math.random()*pool.length)];
+  lastHoldIdx=i;return HOLD_TYPES[i]}
+// 上色用比胶带稍鲜一点的颜色，叠在纸上才像淡彩而不是灰
+const HOLD_TINT={红:'#D2583F',橙:'#DE8A3D',黄:'#DEC24B',绿:'#6FA268',蓝:'#5B86C6',紫:'#8E6FBF',粉:'#E5A2B3',黑:'#3A3833',白:'#FFFFFF',灰:'#B0A99B'};
+const TINT_OP={红:.3,橙:.28,黄:.3,绿:.28,蓝:.3,紫:.28,粉:.3,黑:.16,白:0,灰:.24};
+const INK_MARK='fill="none" stroke-linecap="round"';
+// 淡彩手绘层：淡色填充 + 沿轮廓的一圈彩色笔触 + 几笔同色短划线
+function holdPaint(type,k){if(!k||k==='白')return '';
+  const c=HOLD_TINT[k]||TAPE[k],o=TINT_OP[k]??.2;
+  return `<path d="${type.outline}" fill="${c}" opacity="${o}" style="transform-box:fill-box;transform-origin:center;transform:scale(.94)"/>
+    <path d="${type.outline}" fill="none" stroke="${c}" stroke-width="5" opacity=".22" style="transform-box:fill-box;transform-origin:center;transform:scale(.985)"/>
+    ${(type.marks||[]).map(d=>`<path d="${d}" stroke="${c}" stroke-width="3" opacity=".6" ${INK_MARK}/>`).join('')}`}
+// 一屏拆线画面：颜色/形状都是参数，工具与螺丝按 bolt 锚点摆位
+function stripScene(type,k,name){
+  const b=type.bolt,BX=b.x.toFixed(1),BY=b.y.toFixed(1),tx=(b.x+62.5).toFixed(1),ty=b.y.toFixed(1);
+  return `<div class="stripCard" id="stripwrap">
     <div class="row"><div class="eyebrow">拆线</div><span></span></div>
     <svg viewBox="0 0 320 214" width="100%" style="display:block" fill="none" stroke="var(--ink)" stroke-linecap="round" stroke-linejoin="round">
       <defs><pattern id="stripDots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r=".8" fill="var(--hair)" stroke="none"/></pattern></defs>
       <rect width="320" height="214" fill="url(#stripDots)" stroke="none"/>
-      <g id="stSocket"><circle cx="190" cy="65" r="9.5" stroke="var(--muted)" stroke-width="1.2" opacity=".8"/><circle cx="190" cy="65" r="5" stroke="var(--muted)" stroke-width="1" opacity=".7"/></g>
-      <g id="stHold" transform="rotate(-8 146 110)">
-        <path d="M100 66C106 52 120 42 138 38C158 34 180 40 194 54C206 66 213 84 214 100C215 120 208 140 196 154C184 168 168 178 150 180C132 182 114 177 100 166C86 155 78 138 78 120C78 102 84 82 96 70C97 69 99 67 100 66Z" fill="var(--paper)" stroke-width="1.8"/>
-        <path d="M106 74C116 60 132 52 148 50C166 48 184 55 196 66" stroke="var(--muted)" stroke-width="1" opacity=".42"/>
-        <path d="M90 148C102 160 120 168 138 166" stroke="var(--muted)" stroke-width="1.1" opacity=".35"/>
-        <path d="M112 82C118 77 125 74 132 73" stroke="var(--muted)" stroke-width="1" opacity=".3"/>
-        <ellipse cx="138" cy="116" rx="36" ry="27" stroke-width="1.8" fill="#1F1D19" fill-opacity=".06"/>
-        <ellipse cx="134" cy="111" rx="25" ry="18" stroke="var(--muted)" stroke-width="1.1"/>
-        <path d="M112 128a28 28 0 0 0 25 9" stroke="var(--muted)" stroke-width="1.5" opacity=".75"/><path d="M120 122a24 24 0 0 0 14 6" stroke="var(--muted)" stroke-width="1" opacity=".4"/>
-        <circle cx="196" cy="72" r="13" stroke-width="1.2" opacity=".55"/>
-        <circle cx="92" cy="156" r="3.4" stroke-width="1.1" opacity=".5"/>
+      <g id="stSocket"><circle cx="${BX}" cy="${BY}" r="9.5" stroke="var(--muted)" stroke-width="1.2" opacity=".8"/><circle cx="${BX}" cy="${BY}" r="5" stroke="var(--muted)" stroke-width="1" opacity=".7"/></g>
+      <g id="stHold">
+        <path d="${type.outline}" fill="var(--paper)" stroke="none"/>
+        ${holdPaint(type,k)}
+        <path d="${type.outline}" stroke-width="1.8"/>
+        ${(type.detail||[]).map(d=>`<path d="${d}" stroke-width="1.1" opacity=".5"/>`).join('')}
+        <circle cx="${BX}" cy="${BY}" r="13" stroke-width="1.2" opacity=".55"/>
+        ${type.screw?`<circle cx="${type.screw.x}" cy="${type.screw.y}" r="3.4" stroke-width="1.1" opacity=".5"/>`:''}
       </g>
-      <g id="stBolt">
-        <circle cx="190" cy="65" r="8.5" fill="var(--card)" stroke-width="1.4"/>
-        <path d="M190 60.5l3.9 2.25v4.5l-3.9 2.25-3.9-2.25v-4.5z" fill="var(--ink)" stroke="none"/>
-      </g>
+      <g id="stBolt"><circle cx="${BX}" cy="${BY}" r="8.5" fill="var(--card)" stroke-width="1.4"/>
+        <path d="M${BX} ${(b.y-4.5).toFixed(1)}l3.9 2.25v4.5l-3.9 2.25-3.9-2.25v-4.5z" fill="var(--ink)" stroke="none"/></g>
       <g id="stSpin" opacity="0">
-        <path d="M206 52a20 20 0 0 1 5 12" stroke-width="1.2"/>
-        <path d="M174 78a20 20 0 0 1-5-12" stroke-width="1.2"/>
-        <path d="M198 82a20 20 0 0 1-8 3" stroke-width="1.2"/>
-        <path d="M182 48a20 20 0 0 1 8-3" stroke-width="1.2"/>
+        <path d="M${b.x+16} ${b.y-13}a20 20 0 0 1 5 12" stroke-width="1.2"/>
+        <path d="M${b.x-16} ${b.y+13}a20 20 0 0 1-5-12" stroke-width="1.2"/>
+        <path d="M${b.x+8} ${b.y+17}a20 20 0 0 1-8 3" stroke-width="1.2"/>
+        <path d="M${b.x-8} ${b.y-17}a20 20 0 0 1 8-3" stroke-width="1.2"/>
       </g>
-      <g id="stToolWrap"><g transform="translate(252 65) rotate(-6)">
+      <g id="stToolWrap"><g transform="translate(${tx} ${ty}) rotate(-6)">
         <path d="M-54-1.7l7 1.7-7 1.7z" fill="var(--ink)" stroke="none"/>
         <rect x="-50" y="-3.2" width="13" height="6.4" rx="1.2" stroke-width="1.2" fill="var(--card)"/>
         <rect x="-38" y="-7" width="12" height="14" rx="2.2" stroke-width="1.4" fill="var(--card)"/>
@@ -743,15 +795,25 @@ function startStrip(rid,back){
         <rect x="8" y="47" width="24" height="10" rx="3" fill="var(--paper)" stroke-width="1.3"/>
         <path d="M4 15h3" stroke-width="1.6"/>
         <g id="stBitScrew" opacity="0">
-          <circle cx="-63.2" cy="0" r="5" fill="var(--card)" stroke-width="1.2"/>
-          <path d="M-67.8-3l-4.2 1.4M-67.8 0h-5.4M-67.8 3l-4.2-1.4" stroke-width="1"/>
+          <circle cx="-62.5" cy="0" r="5" fill="var(--card)" stroke-width="1.2"/>
+          <path d="M-67.1-3l-4.2 1.4M-67.1 0h-5.4M-67.1 3l-4.2-1.4" stroke-width="1"/>
         </g>
       </g></g>
     </svg>
-    <div class="strip-hint">${r?esc(r.name)+' · ':''}把岩点上的螺丝拧下来</div>
+    <div class="strip-hint">${name?esc(name)+' · ':''}把岩点上的螺丝拧下来</div>
     <div class="strip-done" id="stripDone">已拆线</div>
     <button class="link" id="stripCancel">取消</button>
-  </div>`;
+  </div>`}
+
+/* ---------- 拆线：全屏居中层 + 电动螺丝刀把岩点上的 M10 螺丝拧下来（螺丝带磁，被批头吸走） ---------- */
+let stripRid=null,stripBack=null,stripTimer=null,stripVib=null;
+function startStrip(rid,back){
+  stripRid=rid;stripBack=back||null;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){finishStrip();return}
+  const r=R(rid),layer=$('stripLayer');
+  const type=HOLD_TYPES.find(h=>h.id===window.__forceHold)||pickHold();
+  const k=r?(r.color||colorOf(r.name)):null;
+  layer.innerHTML=stripScene(type,k,r?r.name:'');
   layer.classList.add('on');
   requestAnimationFrame(()=>{const w=$('stripwrap');if(w)w.classList.add('stripgo')});
   clearTimeout(stripTimer);clearTimeout(stripVib);
@@ -1344,10 +1406,11 @@ $('p-review').onclick=e=>{if(e.target.closest('#heat')){histAt(e);return}const b
 };
 
 /* ---------- 底部面板：选线 / 记一次 / 描线 / 岩馆 / 设置 ---------- */
-let mode='pick',draft={},padPts=[],padPhoto=null,routeBookQ='',pickColorKey=null,nameDraft='';
+let mode='pick',draft={},padPts=[],padPhoto=null,routeBookQ='',lastColorKey=null;
 function startForm(rid){const r=rid&&R(rid),last=r&&climbsOf(rid).pop();
   draft=r?{rid,type:r.type,grade:r.grade,wall:r.wall,mode:(last&&last.mode)||r.mode||'lead',shape:r.shape||null,name:r.name,result:'send',hangs:1,high:.6,why:null}
-         :{rid:null,type:draft.type||'l',gl:draft.gl||'5.10c',gb:draft.gb||'V2',wall:gymObj().wall||15,mode:draft.mode||'lead',shape:null,name:'',color:null,result:'send',hangs:1,high:.6,why:null}}
+         :{rid:null,type:draft.type||'l',gl:draft.gl||'5.10c',gb:draft.gb||'V2',wall:gymObj().wall||15,mode:draft.mode||'lead',shape:null,
+            color:lastColorKey||null,name:lastColorKey?colorWord(lastColorKey):'',result:'send',hangs:1,high:.6,why:null}}
 const dGrade=()=>draft.rid?draft.grade:draft.type==='b'?draft.gb:draft.gl;
 const dRes=()=>{const b=draft.type==='b';return draft.result==='hang'&&(b||draft.mode==='auto')?'send':draft.result};
 function draftObj(){const b=draft.type==='b',res=dRes(),first=res==='send'&&(!draft.rid||!climbsOf(draft.rid).length);
@@ -1389,21 +1452,6 @@ function renderSheet(){
       <input class="field" id="bookQ" placeholder="找一条线：名字或难度" maxlength="24" value="${esc(routeBookQ)}">
       <div id="bookList">${bookListHtml()}</div>`;
     const q=$('bookQ');if(q)q.oninput=e=>{routeBookQ=e.target.value;const bl=$('bookList');if(bl)bl.innerHTML=bookListHtml()};
-    return}
-  if(mode==='c1'){
-    el.innerHTML=`<div class="row"><div class="eyebrow">这条线的颜色</div><button class="link" id="backToForm">取消</button></div>
-      <div class="sub" style="margin-top:6px">先定胶带颜色，名字可以之后补——这样每条线都有颜色。</div>
-      <div class="colgrid">${COLORKEYS.map(k=>`<button class="colbtn${pickColorKey===k?' on':''}" data-col="${k}">${tapeSvg(k,true)}<span>${colorWord(k)}</span></button>`).join('')}</div>
-      <button class="save" id="toName"${pickColorKey?'':' disabled style="opacity:.35"'}>下一步</button>`;
-    return}
-  if(mode==='c2'){
-    const full=colorWord(pickColorKey)+(nameDraft?' '+nameDraft:'');
-    el.innerHTML=`<div class="row"><div class="eyebrow">叫什么名字</div><button class="link" id="backColor">‹ 上一步</button></div>
-      <div style="margin-top:14px;font-family:var(--serif);font-size:26px;font-weight:600" id="nbig">${tapeSvg(pickColorKey,true)}${esc(full)}</div>
-      <div class="sub" style="margin-top:4px">${colorWord(pickColorKey)}胶带 · 名字可以不填</div>
-      <input class="field" id="nname" placeholder="比如 3 号、裂缝、动态（可不填）" maxlength="16" value="${esc(nameDraft)}">
-      <button class="save" id="nameDone">好了</button>`;
-    const nn=$('nname');if(nn){nn.oninput=e=>{nameDraft=e.target.value;const nb=$('nbig');if(nb)nb.innerHTML=tapeSvg(pickColorKey,true)+esc(colorWord(pickColorKey)+(nameDraft.trim()?' '+nameDraft.trim():''))}}
     return}
   if(mode==='set'){el.innerHTML=`
     <div class="row"><div class="eyebrow">设置</div><button class="link" id="close">完成</button></div>
@@ -1481,7 +1529,16 @@ function renderSheet(){
        ${b?'<div class="lenCol"><div class="sub" style="margin:auto 0">抱石画成地上的一块石头，不用填线长。</div></div>'
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
      <div class="lbl">名字</div>
-     <button class="namefield${draft.color?'':' empty'}" id="pickName"><span>${draft.color?tape(draft,true)+esc(draft.name):'先选颜色，再填名字（可不填）'}</span><span class="nfchev">›</span></button>`
+     <div class="namerow">
+       <div class="colwheel">
+         <div class="cwbox"><div class="cw" id="cw"><button class="colchip none" data-v="">原色</button>${COLORKEYS.map(k=>`<button class="colchip" data-v="${k}">${tapeSvg(k,true)}</button>`).join('')}</div></div>
+         <div class="cwname" id="cwname">${draft.color?colorWord(draft.color):'上下滚选颜色'}</div>
+       </div>
+       <div class="namecol">
+         <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}">
+         <div class="sub" id="nfpv" style="margin-top:6px">${esc(draft.name||'先滚一下，选个颜色')}</div>
+       </div>
+     </div>`
    :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${b?meta(R(draft.rid)):draft.grade+" · "+draft.wall+"m"} · 第 ${climbsOf(draft.rid).length+1} 次</div>
        ${b?'<div class="sub">抱石画成地上的一块石头。</div>':''}</div><button class="preview" id="pv">${previewSvg()}</button></div>`}
    ${isNew||b?'':`<div class="lbl">本次方式</div><div class="tog tri" style="margin-top:8px">${Object.entries(MODE).map(([k,t])=>`<button data-cm="${k}" class="${draft.mode===k?'on':''}">${ico(k,13)}${t}</button>`).join('')}</div>`}
@@ -1490,6 +1547,18 @@ function renderSheet(){
    <div class="extra">${extra}</div>
    <button class="save clip" id="save">${isNew?'记下这条线':'记下这一次'}${BINER}</button></div>`;
   const gw=$('gw'),lw=$('lw'),hi=$('high');
+  const cw=$('cw'),rn=$('rname');
+  const fullName=()=>{const suf=rn?rn.value.trim():'';return draft.color?colorWord(draft.color)+(suf?' '+suf:''):suf};
+  const syncName=()=>{draft.name=fullName();const p=$('nfpv');if(p)p.textContent=draft.name||'先滚一下，选个颜色'};
+  if(cw){const chips=[...cw.children],H=34;
+    const pick=()=>{const i=Math.max(0,Math.min(chips.length-1,Math.round(cw.scrollTop/H)));
+      chips.forEach((b,j)=>b.style.setProperty('--k',Math.max(0,1-Math.abs(j-i)*0.6).toFixed(2)));
+      draft.color=chips[i].dataset.v||null;const cn=$('cwname');if(cn){cn.textContent=draft.color?colorWord(draft.color):'上下滚选颜色';cn.style.color='var(--muted)'}
+      syncName()};
+    cw.scrollTop=H*Math.max(0,chips.findIndex(b=>b.dataset.v===(draft.color||'')));pick();
+    cw.onscroll=()=>requestAnimationFrame(pick);
+    cw.onclick=e=>{const b=e.target.closest('.colchip');if(!b)return;const i=chips.indexOf(b);cw.scrollTo({top:i*H,behavior:'smooth'});pick()}}
+  if(rn)rn.oninput=syncName;
   if(hi)hi.oninput=e=>{draft.high=e.target.value/100;const ht=$('hiTxt');if(ht)ht.textContent=hiTxt();const pv=$('pv');if(pv)pv.innerHTML=previewSvg()};
   if(gw){fwTo(gw,0,dGrade());gw.onscroll=()=>{const x=fwPaint(gw,0);if(!x)return;draft.type==='b'?draft.gb=x.dataset.v:draft.gl=x.dataset.v;const pv=$('pv');if(pv)pv.innerHTML=previewSvg()}}
   if(lw){fwTo(lw,1,draft.wall);lw.onscroll=()=>{const x=fwPaint(lw,1);if(!x||+x.dataset.v===draft.wall)return;draft.wall=+x.dataset.v;
@@ -1550,15 +1619,10 @@ function saveDraft(useRoute){const b=draft.type==='b',res=dRes();let r=draft.rid
   const c={rid:r.id,date:TODAY,t:Date.now(),result:res,hangs:res==='hang'?draft.hangs:0,high:res==='fail'?(b?.5:draft.high):1};
   if(!b&&draft.mode)c.mode=draft.mode;   // 这次实际用的方式（线路的 mode 不动）
   if(res!=='send'&&draft.why)c.why=draft.why;
-  data.climbs.push(c);persist();return r}
+  data.climbs.push(c);if(!b&&draft.color)lastColorKey=draft.color;persist();return r}
 $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;fwSync();
   if(d.peak){bookSel=d.peak;mode='peak';renderSheet();$('sheet').scrollTop=0;return}
   if(d.book){closeSheet();openRoute(d.book);return}
-  if(d.col){pickColorKey=d.col;renderSheet();return}
-  if(b.id==='pickName'){pickColorKey=draft.color||colorOf(draft.name)||null;nameDraft=pickColorKey?nameSuffix(draft.name,pickColorKey):draft.name||'';mode='c1';renderSheet();$('sheet').scrollTop=0;return}
-  if(b.id==='backToForm'||b.id==='nameDone'){if(b.id==='nameDone')applyName();mode='form';renderSheet();$('sheet').scrollTop=0;return}
-  if(b.id==='backColor'){mode='c1';renderSheet();return}
-  if(b.id==='toName'){if(!pickColorKey)return;mode='c2';renderSheet();$('sheet').scrollTop=0;return}
   if(d.strip){startStrip(d.strip,'routes');return}
   if(d.restore){restoreRoute(R(d.restore));return}
   if(b.id==='openBook'){routeBookQ='';mode='routes';renderSheet();return}
@@ -1570,7 +1634,7 @@ $('sheet').onclick=e=>{const b=e.target.closest('button');if(!b)return;const d=b
   if(b.id==='aiCopy'){copy(aiText(),b,'已复制');return}
   if(b.id==='askNo'){const a=askCfg;if(a.onNo)a.onNo();else{closeSheet();renderAll()}return}
   if(b.id==='askYes'){const a=askCfg,i=$('askIn'),err=a.onYes(i?i.value:undefined);if(typeof err==='string')$('askErr').textContent=err;return}
-  if(b.id==='save'){if(!draft.rid&&!draft.color){pickColorKey=null;nameDraft='';mode='c1';renderSheet();$('sheet').scrollTop=0;return}
+  if(b.id==='save'){if(!draft.rid&&!draft.color){const cn=$('cwname');if(cn){cn.textContent='先滚一下，选个颜色';cn.style.color='var(--accent)'}return}
     if(b.classList.contains('go'))return;b.classList.add('go');setTimeout(()=>{if(navigator.vibrate)navigator.vibrate(10);const dup=findDup();
     if(dup)ask({title:'这条线是不是已经在爬了',body:`这家岩馆有一条在爬的「${esc(dup.name)} · ${meta(dup)}」，${lab(dup.since)} 开始爬，已经爬了 ${climbsOf(dup.id).length} 次。<br><br>是同一条，这次就记到它上面。是新定的线，就另建一条，旧的那条标成已拆线。`,
       yes:'是同一条',no:'是新定的线',onYes:()=>finishSave(dup),onNo:()=>{dup.retired=true;finishSave()}});
