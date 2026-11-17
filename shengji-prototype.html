@@ -1950,7 +1950,7 @@ async function openShareInner(kind){
   // 生成较慢时的兜底：3.5 秒还没就绪就把按钮放开，至少能点出提示
   setTimeout(()=>{
     if(tok!==shareGen)return;
-    shareTipText('图片生成较慢，点保存/分享会等它生成');
+    if(!shareDataURL)shareTipText('图片生成较慢，点保存/分享会等它生成');
   },3500);
   try{await document.fonts.ready;ctx.clearRect(0,0,W,H);await b.draw(ctx,b.data)}
   catch(e){shareTipText('这张卡画到一半出错了，可以截图预览')}
