@@ -383,7 +383,7 @@ button:active:not(:disabled),label.ghostbtn:active{opacity:.6}
       <div class="shareTop"><b id="shareTitle">分享</b><button id="shareClose">关闭</button></div>
       <div class="sharePreview"><canvas id="shareCanvas"></canvas></div>
       <div class="shareTip" id="shareTip">保存成图片，或直接分享给朋友</div>
-      <div class="shareBtns"><button class="sb" id="shareSave" disabled>保存图片</button><button class="sp" id="shareDo" disabled>分享</button></div>
+      <div class="shareBtns"><button class="sb" id="shareSave">保存图片</button><button class="sp" id="shareDo">分享</button></div>
     </div>
   </div>
 
@@ -1946,23 +1946,23 @@ async function openShareInner(kind){
   document.getElementById('shareTitle').textContent=b.title;
   document.getElementById('shareTip').textContent=kind==='day'?'今天的攀爬小票 · 数字只写事实':kind==='route'?'这条线的胶带条 · 可以贴进本子里':'这张贴纸 · 暖纸磨砂底';
   document.getElementById('shareLayer').classList.add('on');document.getElementById('shareLayer').setAttribute('aria-hidden','false');
+  pendingShareAction=null;shareTipText('正在准备图片…');
   // 生成较慢时的兜底：3.5 秒还没就绪就把按钮放开，至少能点出提示
   setTimeout(()=>{
     if(tok!==shareGen)return;
-    const bs=document.getElementById('shareSave'),bd=document.getElementById('shareDo');
-    if(bs&&bs.disabled){bs.disabled=false;bd.disabled=false;shareTipText('图片生成较慢，可以再点一次保存/分享');}
+    shareTipText('图片生成较慢，点保存/分享会等它生成');
   },3500);
   try{await document.fonts.ready;ctx.clearRect(0,0,W,H);await b.draw(ctx,b.data)}
   catch(e){shareTipText('这张卡画到一半出错了，可以截图预览')}
   prepareShare(tok,b);
 }
 async function openShare(kind){try{await openShareInner(kind)}catch(e){console.error(e);alert('分享卡生成失败：'+(e&&e.message?e.message:e))}}
-function closeShare(){shareGen++;document.getElementById('shareLayer').classList.remove('on');document.getElementById('shareLayer').setAttribute('aria-hidden','true')}
+function closeShare(){shareGen++;pendingShareAction=null;document.getElementById('shareLayer').classList.remove('on');document.getElementById('shareLayer').setAttribute('aria-hidden','true')}
 function shareFile(){const d=shareData;const base=shareKind==='day'?'岩迹-小票-'+d.date:shareKind==='route'?'岩迹-胶带-'+d.name:('岩迹-贴纸-'+d.name);return base.replace(/[\\/:*?"<>|]/g,'')+'.png'}
 function shareTipText(t){const el=document.getElementById('shareTip');if(el)el.textContent=t}
 function isMobileShare(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')}
 function nativeShareReady(){return !!(shareFileCache&&navigator.canShare&&navigator.canShare({files:[shareFileCache]}))}
-let shareDataURL=null,shareFileCache=null,shareGen=0;
+let shareDataURL=null,shareFileCache=null,shareGen=0,pendingShareAction=null;
 function dataURLToFile(url,name){
   const arr=String(url).split(',');if(arr.length<2)throw new Error('bad data url');
   const mime=(arr[0].match(/:(.*?);/)||[])[1]||'image/png';
@@ -1972,8 +1972,6 @@ function dataURLToFile(url,name){
 }
 async function prepareShare(tok,b){
   shareDataURL=null;shareFileCache=null;
-  const bs=document.getElementById('shareSave'),bd=document.getElementById('shareDo');
-  if(bs)bs.disabled=true;if(bd)bd.disabled=true;
   shareTipText('正在准备图片…');
   let url=null;
   try{url=shareCanvas().toDataURL('image/png')}catch(e){
@@ -1990,11 +1988,12 @@ async function prepareShare(tok,b){
   if(url){
     shareDataURL=url;
     try{shareFileCache=dataURLToFile(url,shareFile())}catch(e){shareFileCache=null}
-    if(bs)bs.disabled=false;if(bd)bd.disabled=false;
     shareTipText(nativeShareReady()?'可以保存，也可以直接分享给朋友':'可以保存；如果没有反应，点开图片后长按保存');
+    const act=pendingShareAction;pendingShareAction=null;
+    if(act==='save')shareSave();
+    else if(act==='share'){shareImageFallback();shareTipText('图片好了；再点一次「分享」可调系统面板')}
   }else{
-    // 连 dataURL 都拿不到：仍然启用按钮，点了至少给提示
-    if(bs)bs.disabled=false;if(bd)bd.disabled=false;
+    pendingShareAction=null;
     shareTipText('浏览器没能生成图片，请截图这张预览');
   }
 }
@@ -2020,14 +2019,14 @@ function nativeShare(){
   }catch(e){shareImageFallback()}
 }
 function shareSave(){
-  if(!shareDataURL){shareTipText('图片还没生成，请截图这张预览');return}
+  if(!shareDataURL){pendingShareAction='save';shareTipText('正在准备图片，好了会自动打开保存层');return}
   if(!isMobileShare())downloadShareDataURL();
   // 不管下载有没有被浏览器静默拦掉，都给一个可见的结果
   shareImageFallback();
   shareTipText('图片已生成；没看到下载就长按/右键保存');
 }
 function shareDo(){
-  if(!shareDataURL){shareTipText('图片还没生成，请截图这张预览');return}
+  if(!shareDataURL){pendingShareAction='share';shareTipText('正在准备图片，好了会自动打开');return}
   // 先显示图片层，保证一定有反馈；有系统分享再叠上去
   shareImageFallback();
   if(nativeShareReady())nativeShare();
