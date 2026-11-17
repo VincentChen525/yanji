@@ -1870,6 +1870,7 @@ function drawTape(ctx,D){
   ctx.restore();
 }
 /* 3 山形贴纸 */
+let shareForceNoImg=false;
 async function drawSticker(ctx,D){
   const W=D.W,H=D.H;
   const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#F9F3E6');g.addColorStop(1,'#E8DECB');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -1881,7 +1882,7 @@ async function drawSticker(ctx,D){
   sText(ctx,D.date,406,30,9,SHARE_MUTED,'right');
   // 贴纸自适应：山/建筑都按原图宽高比缩放，不留固定白卡的空白
   const isB=D.kind==='b',maxW=380,maxH=isB?232:192,topY=isB?112:160;
-  let img=null;try{img=await shareLoadImg('brand/share/sticker-'+D.num+'.png')}catch(e){}
+  let img=null;if(!shareForceNoImg){try{img=await shareLoadImg('brand/share/sticker-'+D.num+'.png')}catch(e){}}
   let dw=maxW,dh=isB?maxH*.75:150,dx=(W-dw)/2,dy=topY;
   if(img){const sc=Math.min(maxW/img.width,maxH/img.height);dw=img.width*sc;dh=img.height*sc;dx=(W-dw)/2;dy=topY}
   function hasInk(im){try{const w=Math.min(260,im.width),h=Math.max(1,Math.round(im.height*w/im.width)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');c.drawImage(im,0,0,w,h);const d=c.getImageData(0,0,w,h).data;let n=0;for(let i=0;i<d.length;i+=4){if(d[i+3]>100&&d[i]<110&&d[i+1]<110&&d[i+2]<110)n++}return n>18}catch(e){return false}}
@@ -1945,63 +1946,89 @@ async function openShare(kind){
   document.getElementById('shareTitle').textContent=b.title;
   document.getElementById('shareTip').textContent=kind==='day'?'今天的攀爬小票 · 数字只写事实':kind==='route'?'这条线的胶带条 · 可以贴进本子里':'这张贴纸 · 暖纸磨砂底';
   document.getElementById('shareLayer').classList.add('on');document.getElementById('shareLayer').setAttribute('aria-hidden','false');
-  await document.fonts.ready;
-  ctx.clearRect(0,0,W,H);await b.draw(ctx,b.data);
-  prepareShare(tok);
+  // 生成较慢时的兜底：3.5 秒还没就绪就把按钮放开，至少能点出提示
+  setTimeout(()=>{
+    if(tok!==shareGen)return;
+    const bs=document.getElementById('shareSave'),bd=document.getElementById('shareDo');
+    if(bs&&bs.disabled){bs.disabled=false;bd.disabled=false;shareTipText('图片生成较慢，可以再点一次保存/分享');}
+  },3500);
+  try{await document.fonts.ready;ctx.clearRect(0,0,W,H);await b.draw(ctx,b.data)}
+  catch(e){shareTipText('这张卡画到一半出错了，可以截图预览')}
+  prepareShare(tok,b);
 }
 function closeShare(){shareGen++;document.getElementById('shareLayer').classList.remove('on');document.getElementById('shareLayer').setAttribute('aria-hidden','true')}
 function shareFile(){const d=shareData;const base=shareKind==='day'?'岩迹-小票-'+d.date:shareKind==='route'?'岩迹-胶带-'+d.name:('岩迹-贴纸-'+d.name);return base.replace(/[\\/:*?"<>|]/g,'')+'.png'}
-function shareBlob(){return new Promise(res=>shareCanvas().toBlob(res,'image/png'))}
 function shareTipText(t){const el=document.getElementById('shareTip');if(el)el.textContent=t}
 function isMobileShare(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')}
 function nativeShareReady(){return !!(shareFileCache&&navigator.canShare&&navigator.canShare({files:[shareFileCache]}))}
-let shareBlobCache=null,shareFileCache=null,shareGen=0;
-function prepareShare(tok){
-  shareBlobCache=null;shareFileCache=null;
+let shareDataURL=null,shareFileCache=null,shareGen=0;
+function dataURLToFile(url,name){
+  const arr=String(url).split(',');if(arr.length<2)throw new Error('bad data url');
+  const mime=(arr[0].match(/:(.*?);/)||[])[1]||'image/png';
+  const bin=atob(arr[1]);const u8=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+  return new File([u8],name,{type:mime});
+}
+async function prepareShare(tok,b){
+  shareDataURL=null;shareFileCache=null;
   const bs=document.getElementById('shareSave'),bd=document.getElementById('shareDo');
   if(bs)bs.disabled=true;if(bd)bd.disabled=true;
-  shareTipText('正在生成图片…');
-  shareBlob().then(blob=>{
-    if(tok!==shareGen)return;
-    if(!blob){shareTipText('浏览器没能生成图片，请截图这张预览');return}
-    shareBlobCache=blob;
-    try{shareFileCache=new File([blob],shareFile(),{type:'image/png'})}catch(e){shareFileCache=null}
+  shareTipText('正在准备图片…');
+  let url=null;
+  try{url=shareCanvas().toDataURL('image/png')}catch(e){
+    // 图片跨域/被限制时，强制不走贴纸图片，改用剪影+线稿再试一次
+    try{
+      shareForceNoImg=true;
+      const cv=shareCanvas(),ctx=cv.getContext('2d'),W=cv.width/2,H=cv.height/2;
+      ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,W,H);await b.draw(ctx,b.data);
+      url=cv.toDataURL('image/png');
+    }catch(e2){url=null}
+    finally{shareForceNoImg=false}
+  }
+  if(tok!==shareGen)return;
+  if(url){
+    shareDataURL=url;
+    try{shareFileCache=dataURLToFile(url,shareFile())}catch(e){shareFileCache=null}
     if(bs)bs.disabled=false;if(bd)bd.disabled=false;
     shareTipText(nativeShareReady()?'可以保存，也可以直接分享给朋友':'可以保存；如果没有反应，点开图片后长按保存');
-  }).catch(()=>{if(tok===shareGen)shareTipText('浏览器没能生成图片，请截图这张预览')});
+  }else{
+    // 连 dataURL 都拿不到：仍然启用按钮，点了至少给提示
+    if(bs)bs.disabled=false;if(bd)bd.disabled=false;
+    shareTipText('浏览器没能生成图片，请截图这张预览');
+  }
 }
-function downloadShareBlob(blob){
-  try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=shareFile();a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);return true}catch(e){return false}
+function downloadShareDataURL(){
+  try{const a=document.createElement('a');a.href=shareDataURL;a.download=shareFile();a.style.display='none';document.body.appendChild(a);a.click();a.remove();return true}catch(e){return false}
 }
-function shareImageFallback(blob){
+function shareImageFallback(){
+  if(!shareDataURL){shareTipText('浏览器没能生成图片，请截图这张预览');return}
   const old=document.getElementById('shareImgLayer');if(old)old.remove();
-  const url=URL.createObjectURL(blob);
   const d=document.createElement('div');d.id='shareImgLayer';
   d.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(25,22,17,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px;';
-  const img=document.createElement('img');img.src=url;img.alt='岩迹分享卡';img.style.cssText='max-width:92vw;max-height:74vh;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.4);display:block';
+  const img=document.createElement('img');img.src=shareDataURL;img.alt='岩迹分享卡';img.style.cssText='max-width:92vw;max-height:74vh;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.4);display:block';
   const tip=document.createElement('div');tip.textContent='长按图片保存到相册';tip.style.cssText='color:#F4F0E6;font:13px -apple-system,sans-serif;text-align:center';
   const btn=document.createElement('button');btn.textContent='关闭';btn.style.cssText='height:42px;padding:0 26px;border-radius:21px;border:1px solid rgba(244,240,230,.6);background:none;color:#F4F0E6;font:14px -apple-system,sans-serif;';
-  btn.onclick=()=>{URL.revokeObjectURL(url);d.remove()};
-  d.onclick=e=>{if(e.target===d){URL.revokeObjectURL(url);d.remove()}};
+  btn.onclick=()=>d.remove();
+  d.onclick=e=>{if(e.target===d)d.remove()};
   d.append(img,tip,btn);document.body.appendChild(d);
 }
 function nativeShare(){
   try{
     const p=navigator.share({files:[shareFileCache],title:'岩迹'});
-    if(p&&p.then)p.then(()=>shareTipText('已分享')).catch(e=>{if(e&&e.name==='AbortError')return;shareImageFallback(shareBlobCache)});
-  }catch(e){shareImageFallback(shareBlobCache)}
+    if(p&&p.then)p.then(()=>shareTipText('已分享')).catch(e=>{if(e&&e.name==='AbortError')return;shareImageFallback()});
+  }catch(e){shareImageFallback()}
 }
 function shareSave(){
-  if(!shareBlobCache){shareTipText('图片还在生成，稍等一下');return}
-  if(isMobileShare()&&nativeShareReady()){shareTipText('在分享面板里选「存储图像」');nativeShare();return}
-  if(!isMobileShare()&&downloadShareBlob(shareBlobCache)){shareTipText('图片已保存；如果没看到，试试分享按钮');return}
-  shareImageFallback(shareBlobCache);
+  if(!shareDataURL){shareTipText('图片还没生成，请截图这张预览');return}
+  if(isMobileShare()&&nativeShareReady()){shareTipText('在分享面板里选「存储图像 / 保存图片」');nativeShare();return}
+  if(!isMobileShare()&&downloadShareDataURL()){shareTipText('图片已保存；如果没看到，试试分享按钮');return}
+  shareImageFallback();
 }
 function shareDo(){
-  if(!shareBlobCache){shareTipText('图片还在生成，稍等一下');return}
+  if(!shareDataURL){shareTipText('图片还没生成，请截图这张预览');return}
   if(nativeShareReady()){nativeShare();return}
-  if(!isMobileShare()&&downloadShareBlob(shareBlobCache)){shareTipText('图片已保存');return}
-  shareImageFallback(shareBlobCache);
+  if(!isMobileShare()&&downloadShareDataURL()){shareTipText('图片已保存');return}
+  shareImageFallback();
 }
 document.getElementById('shareSave').onclick=shareSave;
 document.getElementById('shareDo').onclick=shareDo;
