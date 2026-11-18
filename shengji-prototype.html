@@ -134,7 +134,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .hday>i{font-style:normal;font-size:20px;color:var(--muted);font-family:var(--mono)}
 .hleg{display:inline-flex;align-items:center;gap:5px}.hleg svg{display:block}
 .pseg{display:inline-grid;grid-auto-flow:column;border:1px solid var(--hair);border-radius:20px;overflow:hidden}
-.pseg button{border:none;background:none;padding:7px 13px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.pseg button.on{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.pseg button{border:none;background:none;padding:7px 13px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.pseg button.on{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}.pseg button:first-child.on{border-radius:20px 0 0 20px}.pseg button:last-child.on{border-radius:0 20px 20px 0}
 .ins{background:var(--card);border-radius:16px;padding:16px;margin-top:12px}.ins[data-rid]{cursor:pointer}
 .ins .k,.tile .k{font-size:11px;color:var(--muted);letter-spacing:.08em}
 .ins h3{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1.3;margin:0 0 12px;text-wrap:pretty}
@@ -252,7 +252,7 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 .tog.tri{grid-template-columns:repeat(3,1fr);gap:6px}
 .tog.tri button{padding:10px 2px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:5px}
 .tog.small{display:inline-grid;gap:0;border:1px solid var(--hair);border-radius:20px;overflow:hidden}
-.tog.small button{border:none;border-radius:0;padding:6px 14px;font-size:12px}
+.tog.small button{border:none;border-radius:0;padding:6px 14px;font-size:12px}.tog.small button:first-child.on{border-radius:20px 0 0 20px}.tog.small button:last-child.on{border-radius:0 20px 20px 0}
 .lbl{font-size:11px;color:var(--muted);letter-spacing:.08em;margin-top:14px}
 .extra{margin-top:12px;font-size:13px;color:var(--muted)}
 .extra input[type=range]{width:100%;accent-color:var(--ink);margin-top:4px}
