@@ -18,7 +18,7 @@
 <style>
 :root{
   --paper:#F4F0E6; --card:#FBF8F1; --ink:#1F1D19; --muted:#726C5F; --hair:#D8D1C1;
-  --accent:#E2552B;
+  --redpoint:#E2552B; --redpoint-text:#BF4520; --accent:var(--redpoint);
   /* 全部文字都用霞鹜文楷；网络字体没加载完时退到系统楷体，不会冒出宋体 */
   --serif:"LXGW WenKai","Kaiti SC","STKaiti",serif;
   --mono:var(--serif);
@@ -130,11 +130,11 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .hday .c{flex:none;width:84px}.hday .c svg{display:block;width:84px;height:auto}
 .hday .t{flex:1;min-width:0}.hday .t b{display:block;font-family:var(--serif);font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hday .t b small{font-family:var(--sans);font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}
-.hday .t em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px}.hday .t em.s{color:var(--accent);font-family:var(--sans)}
+.hday .t em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px}.hday .t em.s{color:var(--redpoint-text);font-family:var(--sans)}
 .hday>i{font-style:normal;font-size:20px;color:var(--muted);font-family:var(--mono)}
 .hleg{display:inline-flex;align-items:center;gap:5px}.hleg svg{display:block}
 .pseg{display:inline-grid;grid-auto-flow:column;border:1px solid var(--hair);border-radius:20px;overflow:hidden}
-.pseg button{border:none;background:none;padding:7px 13px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.pseg button.on{background:var(--ink);color:var(--paper)}
+.pseg button{border:none;background:none;padding:7px 13px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.pseg button.on{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .ins{background:var(--card);border-radius:16px;padding:16px;margin-top:12px}.ins[data-rid]{cursor:pointer}
 .ins .k,.tile .k{font-size:11px;color:var(--muted);letter-spacing:.08em}
 .ins h3{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1.3;margin:0 0 12px;text-wrap:pretty}
@@ -152,7 +152,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .tile span{display:block;font-size:11px;color:var(--muted);line-height:1.5}
 .gfl{display:grid;gap:2px;margin-top:10px}.gfl button{display:flex;justify-content:space-between;align-items:baseline;background:none;border:none;border-radius:12px;padding:12px 10px;margin:0 -10px;font:inherit;font-size:15px;color:var(--ink);cursor:pointer;text-align:left}
 .gfl button.on{background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink)}.gfl em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted)}
-.aichips{display:flex;gap:8px;margin:8px -24px 0;padding:0 24px;overflow-x:auto;scrollbar-width:none}.aichips::-webkit-scrollbar{display:none}.aichips button{flex:none;white-space:nowrap;border:1px solid var(--hair);background:var(--paper);border-radius:16px;padding:6px 12px;font:inherit;font-size:12px;color:var(--ink);cursor:pointer}.aichips button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.aichips{display:flex;gap:8px;margin:8px -24px 0;padding:0 24px;overflow-x:auto;scrollbar-width:none}.aichips::-webkit-scrollbar{display:none}.aichips button{flex:none;white-space:nowrap;border:1px solid var(--hair);background:var(--paper);border-radius:16px;padding:6px 12px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.aichips button.on{background:var(--card);color:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 .5px var(--ink)}
 .aipre{margin-top:14px;max-height:150px;overflow-y:auto;border:1px dashed var(--hair);border-radius:12px;padding:10px 12px;font-size:11px;line-height:1.7;color:var(--muted);white-space:pre-wrap}
 .hcard{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--hair);border-radius:14px;margin-top:8px}
 .hgo{flex:1;display:flex;gap:12px;align-items:center;background:none;border:none;padding:10px 4px 10px 10px;text-align:left;font:inherit;color:inherit;cursor:pointer;min-width:0}
@@ -195,7 +195,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .namebox[hidden],.colorbar[hidden]{display:none!important}.cpill i{font-style:normal;font-size:9px;color:var(--muted);margin-left:1px}
 .cpill:active{opacity:.6}
 .namehint{font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;transition:color .18s}
-.namehint.ok{color:var(--accent)}
+.namehint.ok{color:var(--ink)}
 .colorbar.pop{margin-top:8px;padding:5px;border:0;border-radius:12px;background:var(--card)}
 .colorbar.pop .colorchip{height:34px}
 .colorbar .colorchip .tape{display:block;width:22px;height:9.5px;margin:0;flex:0 0 22px;vertical-align:0}
@@ -230,7 +230,7 @@ nav{position:absolute;left:0;right:0;bottom:0;display:flex;background:linear-gra
 nav button{flex:1;background:none;border:none;font-family:var(--serif);font-size:15px;color:var(--muted);padding:8px 0;cursor:pointer;position:relative}
 nav button.on{color:var(--ink);font-weight:600}
 nav button.on::after{content:"";position:absolute;left:50%;bottom:0;width:5px;height:5px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
-nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22px);width:5px;height:5px;border-radius:50%;background:var(--accent)}
+nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22px);width:5px;height:5px;border-radius:50%;background:var(--ink)}
 .fab{position:absolute;right:22px;bottom:calc(92px + env(safe-area-inset-bottom));height:52px;padding:0 22px;border-radius:26px;border:none;background:var(--ink);color:var(--paper);font-family:var(--serif);font-size:16px;cursor:pointer;box-shadow:0 8px 20px rgba(30,25,15,.25)}
 .veil{position:absolute;inset:0;background:rgba(30,27,20,.35);opacity:0;pointer-events:none;transition:opacity .25s}
 .sheet{position:absolute;left:0;right:0;bottom:0;max-height:94%;overflow-y:auto;background:var(--card);border-radius:26px 26px 0 0;padding:20px 24px calc(26px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s}
@@ -243,8 +243,9 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 .step.sm{width:36px;height:36px;font-size:17px}
 .seg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
 .seg.three{grid-template-columns:repeat(3,1fr)}
-.seg button,.tog button{border:1px solid var(--hair);background:var(--paper);border-radius:12px;padding:11px 6px;font-size:14px;color:var(--ink);cursor:pointer;font-family:var(--sans)}
-.seg button.on,.tog button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.seg button,.tog button{border:1px solid var(--hair);background:var(--paper);border-radius:12px;padding:11px 6px;font-size:14px;color:var(--muted);cursor:pointer;font-family:var(--sans)}
+.seg button.on,.tog button.on{background:var(--card);color:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 .5px var(--ink);font-weight:600}
+.seg button.on[data-r="send"]::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--redpoint);margin-right:5px;vertical-align:1px}
 .seg.soft button{padding:8px 4px;font-size:13px;border-radius:20px}
 .seg.col{grid-template-columns:1fr}
 .tog{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -276,7 +277,7 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 .gymchip{margin-top:12px;border:1px solid var(--hair);background:var(--paper);border-radius:20px;padding:7px 14px;font-size:13px;color:var(--ink);cursor:pointer;font-family:var(--sans)}
 .nf .lbl{margin-top:20px}.nf .field{margin-top:20px}.nf .save{margin-top:20px}
 .gwbox{position:relative;margin:4px -24px 0}
-.gwbox::after{content:'';position:absolute;left:50%;bottom:0;width:16px;height:2px;margin-left:-8px;border-radius:1px;background:var(--accent)}
+.gwbox::after{content:'';position:absolute;left:50%;bottom:0;width:16px;height:2px;margin-left:-8px;border-radius:1px;background:var(--ink)}
 .gw{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 calc(50% - 52px) 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .gw::-webkit-scrollbar,.lw::-webkit-scrollbar{display:none}
 .gw button{flex:0 0 104px;height:60px;scroll-snap-align:center;background:none;border:none;padding:0;cursor:pointer;color:var(--ink);font-family:var(--mono);font-size:46px;font-weight:500;letter-spacing:-.04em;white-space:nowrap;display:flex;justify-content:center;align-items:center;
@@ -290,7 +291,7 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 .lw .rope{position:absolute;left:calc(50% - 69px);top:0;width:10px;border-radius:5px;pointer-events:none;background:
   linear-gradient(90deg,rgba(31,29,25,.26),transparent 32%,rgba(255,255,255,.3) 50%,transparent 68%,rgba(31,29,25,.26)),
   repeating-linear-gradient(58deg,transparent 0 3.2px,rgba(31,29,25,.34) 3.2px 4.4px),
-  repeating-linear-gradient(-58deg,transparent 0 3.2px,rgba(251,248,241,.4) 3.2px 4.4px),var(--rope,var(--accent));transition:background-color .2s}
+  repeating-linear-gradient(-58deg,transparent 0 3.2px,rgba(251,248,241,.4) 3.2px 4.4px),var(--rope,var(--ink));transition:background-color .2s}
 .lw.rw .rope{box-shadow:inset 0 0 0 1px var(--hair)}
 .lw button::before{content:'';position:absolute;left:calc(50% - 56px);top:50%;width:5px;height:1px;background:var(--muted)}
 .lw button[data-five]::after{content:'';position:absolute;left:calc(50% - 70px);top:calc(50% - 3px);width:12px;height:6px;border-radius:1.5px;background:var(--ink)}
@@ -321,6 +322,9 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 /* 阶：三个方式卡（既是概览也是选择器） */
 .mcards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .mcards.two{grid-template-columns:repeat(2,1fr)}
+.mcards.four{grid-template-columns:repeat(4,1fr);gap:6px}
+.mcards.four .mcard{padding:9px 8px 8px}
+.mcards.four .mcard b{font-size:23px}
 .mcard{background:var(--card);border:1px solid transparent;border-radius:14px;padding:10px 11px 9px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
 .mcard.on{box-shadow:inset 0 0 0 1.4px var(--ink)}
 .mcard span{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap}
@@ -443,7 +447,7 @@ const BOULDER=['V0','V1','V2','V3','V4','V5','V6','V7','V8','V9','V10'];
 const BWALL=4;          // 抱石墙按 4 米算
 const ACTIVE_DAYS=45;   // 超过这么多天没爬的线，不再出现在快捷列表里
 const REASON={pump:'没力了',tech:'动作不会',head:'不敢冲'};
-const MODE={lead:'先锋',tr:'顶绳',auto:'自保'};
+const MODE={auto:'自保',tr:'顶绳',lead:'先锋'};
 const scale=t=>t==='b'?BOULDER:LEAD;
 const short=g=>g.replace('5.','');
 const gi=r=>scale(r.type).indexOf(r.grade);
@@ -540,6 +544,7 @@ const glyph=c=>mk(c.result==='send'?(firstGo(c)?'a':'s'):c.result==='hang'?'h':'
 // 岩馆用胶带颜色区分线路：名字里有颜色词，就在名字前画一小段斜切的胶带
 const TAPE_EN={红:'RED',橙:'ORANGE',黄:'YELLOW',绿:'GREEN',蓝:'BLUE',紫:'PURPLE',粉:'PINK',黑:'BLACK',白:'WHITE',灰:'GREY'};
 const TAPE={红:'#B9503F',橙:'#D27D3E',黄:'#D8B13F',绿:'#5F8A5B',蓝:'#4F6F9E',紫:'#7A5E9C',粉:'#D7909F',黑:'#2A2824',白:'#FFFFFF',灰:'#A39E92'};
+const tapeEdge=k=>['白','黄','灰'].includes(k)?'rgba(31,29,25,.55)':'rgba(31,29,25,.28)';
 const COLORKEYS=Object.keys(TAPE);
 const colorWord=k=>k?k+'色':'';
 const colorOf=n=>{const t=String(n||'').trim();if(!t)return null;
@@ -553,7 +558,7 @@ function stripColorMention(name){
     return part.replace(k+'色','').replace(k,'');
   }).filter(Boolean).join(' ').trim();
 }
-const tapeSvg=(k,big)=>k?`<svg class="tape${big?' big':''}" viewBox="0 0 16 7"><path d="M2.2 .5H15.5L13.8 6.5H.5Z" fill="${TAPE[k]}" stroke="rgba(31,29,25,.25)" stroke-width=".6" stroke-linejoin="round"/></svg>`:'';
+const tapeSvg=(k,big)=>k?`<svg class="tape${big?' big':''}" viewBox="0 0 16 7"><path d="M2.2 .5H15.5L13.8 6.5H.5Z" fill="${TAPE[k]}" stroke="${tapeEdge(k)}" stroke-width=".75" stroke-linejoin="round"/></svg>`:'';
 const tape=(x,big)=>{const n=typeof x==='string'?x:(x&&x.name)||'';return tapeSvg((x&&x.color)||colorOf(n),big)};
 const nameSuffix=(name,k)=>{const w=colorWord(k),n=String(name||'');return n.startsWith(w)?n.slice(w.length).trim():''};
 // 老数据没有单独的颜色字段：从名字里补一次
@@ -572,7 +577,7 @@ const ICO={lead:'<path d="M5.5 13V1M5.5 10.5h4M5.5 7h4M5.5 3.5h4"/>',tr:'<path d
   auto:'<rect x="3.8" y="1" width="6.4" height="4.4" rx="1.3" fill="currentColor" stroke="none"/><path d="M7 5.4V13"/>',
   b:'<path d="M2.5 11.5c-.6-2.6.8-5.4 3-6.3 2.6-1 5.6.4 6 3 .3 1.6-.2 2.6-.8 3.3z"/>'};
 const ico=(k,size,x,y)=>`<svg x="${x||0}" y="${y||0}" width="${size}" height="${size}" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
-const ORDER=['lead','tr','auto','b'],ZNAME={lead:'先锋',tr:'顶绳',auto:'自保',b:'抱石'};
+const ORDER=['auto','tr','lead','b'],ZNAME={auto:'自保',tr:'顶绳',lead:'先锋',b:'抱石'};
 const zoneOf=o=>o.type==='b'?'b':o.mode||'lead';
 const seedOf=r=>{let h=0;for(const ch of String(r.id||'x'))h=(h*31+ch.charCodeAt(0))%997;return h/50};
 // 一条绳线的几何：xa(h) 某高度的横坐标，Y(h) 纵坐标，to(h) 从地面画到 h 的路径
@@ -657,7 +662,9 @@ function chart(list,o={}){
     if(!b)lens.forEach(m=>{const y=ly(m).toFixed(1);s+=`<line x1="${(zx+4).toFixed(1)}" x2="${(zx+zw-4).toFixed(1)}" y1="${y}" y2="${y}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="1 4"/>`});
     const hy=b?top-sl[0]-17:3;
     s+=`<g style="color:var(--muted)">${ico(z.k,12,zx+1,hy)}<text x="${(zx+16).toFixed(1)}" y="${hy+10}" font-size="10" fill="var(--muted)" style="font-family:var(--sans)">${ZNAME[z.k]}</text></g>`;
-    z.items.forEach((r,i)=>{const cw=zw/n,x=zx+cw*(i+.5);s+=mark(r,x,yG,H,false,true,b?1:r.wall/wallH)+
+    z.items.forEach((r,i)=>{const cw=zw/n,x=zx+cw*(i+.5),ck=r.color||colorOf(r.name);
+      if(ck)s+=`<path d="M${(x-6).toFixed(1)} ${(yG-4).toFixed(1)}H${(x+6).toFixed(1)}L${(x+4.6).toFixed(1)} ${(yG+1).toFixed(1)}H${(x-4.6).toFixed(1)}Z" fill="${TAPE[ck]}" stroke="${tapeEdge(ck)}" stroke-width=".7" stroke-linejoin="round"/>`;
+      s+=mark(r,x,yG,H,false,true,b?1:r.wall/wallH)+
       `<rect data-rid="${r.id}" x="${(x-cw/2).toFixed(1)}" y="0" width="${cw.toFixed(1)}" height="${h}" fill="transparent" style="cursor:pointer"/>`});
     zx+=zw+gap});
   return s+`<line x1="4" x2="${w-4}" y1="${yG}" y2="${yG}" stroke="var(--ink)" stroke-width="1.2"/></svg>`}
@@ -704,13 +711,14 @@ function heat(){
     if(dt.getDate()===1)g+=`<text x="${(x-st/2+2).toFixed(1)}" y="10" font-size="10" fill="var(--muted)">${dt.getMonth()+1}月</text>`;
     if(!m){g+=`<circle cx="${x}" cy="${y}" r="1.1" fill="var(--hair)"/>`;continue}
     const g1=inGym(d),on=g1&&d>=pf;if(g1)pts.push({d,x,y});
-    g+=`<circle cx="${x}" cy="${y}" r="${(2.6+3.4*Math.sqrt(m/mx)).toFixed(2)}" fill="${tops.has(d)?'var(--accent)':'var(--ink)'}"${on?'':' opacity=".22"'}/>`}
+    if(!on){g+=`<circle cx="${x}" cy="${y}" r="3.1" fill="none" stroke="var(--hair)" stroke-width=".9"/>`;continue}
+    g+=`<circle cx="${x}" cy="${y}" r="${(2.6+3.4*Math.sqrt(m/mx)).toFixed(2)}" fill="${tops.has(d)?'var(--accent)':'var(--ink)'}"/>`}
   histM={pts,W,H,others:list};const sp=pts.find(q=>q.d===histSel);
   g+=`<circle id="hRing" cx="${sp?sp.x:-99}" cy="${sp?sp.y:-99}" r="7.6" fill="none" stroke="var(--ink)" stroke-width="1.1"/></svg>`;
   return`<div class="row" style="align-items:baseline"><h2>每一次</h2><span class="yrs">${years.length>1?years.map(y=>`<button data-y="${y}" class="${y===yr?'on':''}">${y}</button>`).join(''):`<em>${yr}</em>`}</span></div>
    <div class="sub">点一天看记录</div>
    <div class="hscroll" id="hscroll">${g}</div>
-   <div class="legend" style="align-items:center"><span class="hleg">爬升 少<svg viewBox="0 0 52 14" width="52" height="14">${[2.6,3.7,4.9,6].map((r,i)=>`<circle cx="${7+i*13}" cy="7" r="${r}" fill="var(--ink)"/>`).join('')}</svg>多</span>${tops.size?'<span><i style="color:var(--accent)">●</i>登顶</span>':''}${perKey()==='all'&&!gymSel?'':'<span><i style="color:var(--ink);opacity:.22">●</i>不在范围内</span>'}</div>
+   <div class="legend" style="align-items:center"><span class="hleg">爬升 少<svg viewBox="0 0 52 14" width="52" height="14">${[2.6,3.7,4.9,6].map((r,i)=>`<circle cx="${7+i*13}" cy="7" r="${r}" fill="var(--ink)"/>`).join('')}</svg>多</span>${tops.size?'<span><i style="color:var(--accent)">●</i>登顶</span>':''}${perKey()==='all'&&!gymSel?'':'<span><i style="width:7px;height:7px;border:1px solid var(--hair);border-radius:50%;background:none"></i>不在范围内</span>'}</div>
    <div id="histCard">${dayCard(histSel)}</div>`}
 // 每一次：一天一张卡片，横着排，左右滑就是前一次、后一次；和上面的点阵互相跟着走
 function dayCard(d){const cs=byDate(d),A=aggs(d),tp=expedition().summits.filter(x=>x.date===d).map(x=>x.n);
@@ -760,7 +768,7 @@ function routeSvg(r,cs){cs=cs||climbsOf(r.id);const {W,H,x,yG,HH}=RG;
   return s+`</g><circle id="rdot" r="6" fill="var(--ink)" style="display:none"/></svg>`}
 function renderRoute(){const r=R(curRid);if(!r){go('today');return}
   const all=climbsOf(r.id),rope=r.type!=='b';
-  const groups=rope?[...new Set(all.map(c=>MODEG(cMode(c,r))))]:[];
+  const groups=rope?[...new Set(all.map(c=>MODEG(cMode(c,r))))]:[];groups.sort((a,b)=>['up','lead'].indexOf(a)-['up','lead'].indexOf(b));
   if(!rope||groups.length<2)routeSel=null;else if(routeSel&&!groups.includes(routeSel))routeSel=null;
   const cs=routeClimbs(r),sent=cs.some(c=>c.result==='send'),twin=twinOf(r);
   const status=r.retired?'已拆线':sent?'已完攀':'还在磕';
@@ -1188,7 +1196,7 @@ function renderMount(part){
   s+=`<path ${art2} stroke="var(--hair)"/><path ${art} stroke="var(--hair)"/><g clip-path="url(#mClip)"><path ${art2} stroke="var(--muted)" opacity=".8"/><path ${art} stroke="var(--muted)"/></g>`;
   s+=`<line x1="4" x2="${W-4}" y1="${yG}" y2="${yG}" stroke="var(--ink)" stroke-width="1.1"/>`;
   s+=`<line x1="${topL?4:PX+16}" x2="${topL?PX-16:W-4}" y1="${yG-hh}" y2="${yG-hh}" stroke="var(--muted)" stroke-width=".8" stroke-dasharray="1 4"/><text x="${topL?4:W-4}" y="${yG-hh-6}" font-size="10" text-anchor="${topL?'start':'end'}" fill="var(--muted)">顶 ${fmt(T.m)} m</text>`;
-  if(cur>0&&T.m-cur>0.5)s+=`<text x="${topL?4:W-4}" y="${yG-hh+8}" font-size="9" text-anchor="${topL?'start':'end'}" fill="var(--accent)">还差 ${fmt(T.m-cur)} m</text>`;
+  if(cur>0&&T.m-cur>0.5)s+=`<text x="${topL?4:W-4}" y="${yG-hh+8}" font-size="9" text-anchor="${topL?'start':'end'}" fill="var(--muted)">还差 ${fmt(T.m-cur)} m</text>`;
   s+=`<text x="4" y="${yG+16}" font-size="10" fill="var(--muted)">0 m</text>`;
   let d='';const st=Math.max(.5,cur/200);for(let m=0;m<cur;m+=st)d+=(m?'L':'M')+rx(m).toFixed(1)+' '+y(m).toFixed(1);
   d+=(d?'L':'M')+rx(cur).toFixed(1)+' '+y(cur).toFixed(1);
@@ -1210,7 +1218,7 @@ function renderMount(part){
     const right=m.xx<W/2,lx=right?m.xx+7:m.xx-7;
     if(Math.abs(ly-(m.yy+3.4))>0.5)s+=`<path d="M${m.xx.toFixed(1)} ${(m.yy+(right?2:-2)).toFixed(1)}L${lx.toFixed(1)} ${(ly-3).toFixed(1)}" stroke="var(--hair)" stroke-width=".7"/>`;
     s+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="10" text-anchor="${right?'start':'end'}" fill="${m.done?'var(--ink)':'var(--muted)'}">${esc(m.st[1])}${m.isNext?` · ${fmt(m.st[0])} m`:''}</text>`;
-    if(m.isNext&&isAct)s+=`<text x="${lx.toFixed(1)}" y="${(ly+11).toFixed(1)}" font-size="9" text-anchor="${right?'start':'end'}" fill="var(--accent)">还差 ${fmt(m.st[0]-cur)} m</text>`});
+    if(m.isNext&&isAct)s+=`<text x="${lx.toFixed(1)}" y="${(ly+11).toFixed(1)}" font-size="9" text-anchor="${right?'start':'end'}" fill="var(--muted)">还差 ${fmt(m.st[0]-cur)} m</text>`});
   if(whole)s+=`<path d="M${PX} ${yG-hh}v-13l9 3.2l-9 3.2" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>`;
   if(isAct||cur>0)s+=`<g id="mMan" transform="translate(${rx(cur).toFixed(1)} ${(y(cur)-7).toFixed(1)})"><g transform="scale(1.5)"><circle cy="-9.2" r="2.4" fill="var(--ink)"/><path id="mPose" d="${POSE[0]}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
     <text x="${lblR?16:-16}" y="-2" font-size="11" text-anchor="${lblR?'start':'end'}" fill="var(--ink)">${isAct?'你在这里':'停在这里'}</text></g>`;
@@ -1239,7 +1247,7 @@ function renderMount(part){
    <div class="row"><div class="eyebrow">累计爬升</div><button class="iconbtn" data-share="mount" aria-label="分享这座山" title="分享这座山"><svg class="sk"><use href="#sk-share"/></svg></button></div>
    <div class="big" style="margin-top:8px"><span id="mBig">${fmt(total)}</span><small>m</small></div>
    <div class="sub" style="margin-top:8px">${dates().length?`${dates().length} 天，${data.climbs.length} 次攀爬${nTop?`，登顶 ${nTop} 次`:''}。`:'记下第一条线，就从山脚出发。'}</div>
-   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--accent)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
+   ${fresh?`<div class="summit"><div class="row"><div class="eyebrow" style="color:var(--redpoint-text)">登顶了</div><button class="link" id="mOk">知道了</button></div><b>${last.n}</b><em>${lab(last.start)} 出发 · ${lab(last.date)} 登顶 · 去了 ${last.visits} 次</em></div>`:un?`<div class="summit stopcard"><div class="row"><div class="eyebrow" style="color:var(--accent)">观景台 · 到了</div><button class="link" id="mStopOk">知道了</button></div><b>${esc(un.s[1])}</b><em>${esc(un.n)} · ${fmt(un.m)} m · ${esc(un.s[2])}</em>
      <div class="sub" style="margin-top:8px">${esc(un.s[3])}</div>
      <div class="sub" style="margin-top:10px;color:var(--ink)">${stopSeg.d} 天 · ${stopSeg.n} 次 · ${fmt(stopSeg.m)} m${stopSeg.gyms>1?` · ${stopSeg.gyms} 家馆`:''}${stopSeg.best?` · 最高 ${stopSeg.best}`:''}</div>
      ${stopSeg.name?`<div class="sub" style="margin-top:4px">爬最多：${esc(stopSeg.name)} · ${stopSeg.cnt} 次</div>`:''}</div>`:''}
@@ -1304,9 +1312,9 @@ let pyrType='l',pyrMode='lead';
 // 纸面同级的野外名线（凭记忆整理，之后换成按区域核实过的数据）
 const NAMED={'5.8':["Bishop's Terrace",'优胜美地'],'5.9':['Epinephrine','红岩峡谷'],'5.10a':['Dream of Wild Turkeys','红岩峡谷'],'5.10b':['Illusion Dweller','约书亚树'],'5.10c':['Outer Limits','优胜美地'],'5.10d':['Serenity Crack','优胜美地'],'5.11a':['New Dimensions','优胜美地'],'5.11b':['The Naked Edge','埃尔多拉多峡谷'],'5.11c':['Astroman','优胜美地'],'5.11d':['Separate Reality','优胜美地'],'5.12a':['Crimson Cringe','优胜美地'],'5.12b':['Latest Rage','史密斯岩'],'5.12c':['Chain Reaction','史密斯岩'],'5.12d':['Moonlight Buttress','锡安'],'5.13a':['The Phoenix','优胜美地'],
  V2:['White Rastafarian','约书亚树'],V3:['Gunsmoke','约书亚树'],V4:['Stem Gem','约书亚树'],V5:['Blue Suede Shoes','优胜美地'],V6:['Saigon','毕晓普'],V7:['High Plains Drifter','毕晓普'],V8:['Midnight Lightning','优胜美地'],V9:['Soul Slinger','毕晓普'],V10:['Thriller','优胜美地']};
-function levels(t,g){const G=scale(t),st={};
+function levels(t,g){const G=scale(t),st={},g0=g||'lead';
   data.routes.forEach(r=>{if(r.type!==t)return;
-    const cs=climbsOf(r.id).filter(c=>t==='b'||MODEG(cMode(c,r))===(g||'lead'));
+    const cs=climbsOf(r.id).filter(c=>{const m=cMode(c,r);return t==='b'||((g0==='auto'||g0==='tr'||g0==='lead')?m===g0:MODEG(m)===g0)});
     if(!cs.length)return;
     const o=st[r.grade]||(st[r.grade]={tries:0,sends:0,climbs:0});o.tries++;o.climbs+=cs.length;
     if(cs.some(c=>c.result==='send'))o.sends++});
@@ -1328,8 +1336,8 @@ function renderPyr(){
   const anyB=data.routes.some(r=>r.type==='b');
   if(!anyB)pyrType='l';
   if(pyrType==='b')pyrMode='lead';
-  const LD=modeSum('l','lead'),UP=modeSum('l','up'),BD=modeSum('b');
-  const sel=pyrType==='b'?BD:(pyrMode==='up'?UP:LD);
+  const AU=modeSum('l','auto'),TR=modeSum('l','tr'),LD=modeSum('l','lead'),UP=modeSum('l','up'),BD=modeSum('b');
+  const sel=pyrType==='b'?BD:(pyrMode==='auto'?AU:pyrMode==='tr'?TR:pyrMode==='up'?UP:LD);
   const {G,st,limit,stable,goal}=sel.L,TARGET=[1,2,4,6];let rows='';
   let topRow=goal;G.forEach((g,i)=>{if(st[g]&&i>topRow)topRow=i});
   for(let i=topRow;i>=0;i--){const g=G[i],s=st[g]||{tries:0,sends:0},t=TARGET[goal-i]||0;
@@ -1339,11 +1347,11 @@ function renderPyr(){
     rows+=`<div class="pr${i===stable?' stable':''}"><span class="g">${g}</span><span class="sq">${'<i></i>'.repeat(show)}${'<i class="ghost"></i>'.repeat(ghost)}${s.sends>10?`<em>+${s.sends-10}</em>`:''}</span><span class="st">${word}</span></div>`}
   let badges='';for(let i=goal;i>=0&&i>=goal-6;i--){const nm=NAMED[G[i]];if(!nm)continue;const lit=i<=stable;
     badges+=`<div class="badge${lit?' lit':''}"><span class="g">${G[i]}</span><b>${nm[0]}</b><em>${nm[1]}</em><span class="s">${lit?'● 已点亮':'站稳后点亮'}</span></div>`}
-  const mcard=(t,k,icon,label)=>{const obj=t==='b'?BD:(k==='up'?UP:LD),on=t==='b'?pyrType==='b':(pyrType==='l'&&pyrMode===k);
+  const mcard=(t,k,icon,label)=>{const obj=t==='b'?BD:(k==='auto'?AU:k==='tr'?TR:k==='up'?UP:LD),on=t==='b'?pyrType==='b':(pyrType==='l'&&pyrMode===k);
     return`<button class="mcard${on?' on':''}${obj.tries?'':' off'}" data-pt="${t}"${t==='l'?` data-pm="${k}"`:''}>
       <span>${ico(icon,12)}${label}</span><b>${gShow(t,obj.L.stable)}</b>
       <em>${obj.tries?`极限 ${gShow(t,obj.L.limit)}<br>完攀 ${obj.sends} 条`:'还没开始'}</em></button>`};
-  const cards=`<div class="mcards${anyB?'':' two'}">${mcard('l','lead','lead','先锋')}${mcard('l','up','tr','上方保护')}${anyB?mcard('b','b','b','抱石'):''}</div>
+  const cards=`<div class="mcards${anyB?' four':''}">${mcard('l','auto','auto','自保')}${mcard('l','tr','tr','顶绳')}${mcard('l','lead','lead','先锋')}${anyB?mcard('b','b','b','抱石'):''}</div>
     <div class="sub" style="margin-top:8px">大数字是站稳级别 · 极限是最高完攀</div>`;
   let gap='';
   if(pyrType!=='b'&&data.routes.some(r=>r.type==='l')){
@@ -1357,7 +1365,7 @@ function renderPyr(){
       </div>`;
   }
   $('p-pyr').innerHTML=`
-   <div class="row"><div class="eyebrow">难度阶梯 · ${pyrType==='b'?'抱石':GNAME[pyrMode]}</div></div>
+   <div class="row"><div class="eyebrow">难度阶梯 · ${pyrType==='b'?'抱石':(MODE[pyrMode]||GNAME[pyrMode]||'先锋')}</div></div>
    ${cards}
    <div class="card" style="margin-top:14px">${rows||'<div class="sub">还没有记录。</div>'}</div>
    <div class="legend"><span><i class="k"></i>完攀过</span><span><i class="k ghost"></i>建议补 ${G[goal]}</span></div>
@@ -1633,7 +1641,7 @@ function renderSheet(){
   if(res==='hang')extra=`<div class="count">take 了 <button class="step" data-h="-1">−</button><b>${draft.hangs}</b><button class="step" data-h="1">＋</button> 次</div>`;
   if(res==='fail'&&!b)extra=`<span id="hiTxt">${hiTxt()}</span><input type="range" id="high" min="10" max="95" value="${Math.round(draft.high*100)}">`;
   if(res==='hang'||res==='fail')extra+=`<div class="lbl">主要因为（可不选）</div><div class="seg three soft">${Object.entries(REASON).map(([k,t])=>`<button data-y="${k}" class="${draft.why===k?'on':''}">${t}</button>`).join('')}</div>`;
-  if(firstHint)extra=`<span style="color:var(--accent)">第一次爬就完攀，会记成一次过。</span>`;
+  if(firstHint)extra=`<span style="color:var(--redpoint-text)">第一次爬就完攀，会记成一次过。</span>`;
   el.innerHTML=`
    <div class="${isNew?'nf':''}"><div class="row">${isNew?`<div class="tog small"><button data-ty="l" class="${b?'':'on'}">难度</button><button data-ty="b" class="${b?'on':''}">抱石</button></div>`:`<div class="eyebrow">${esc(data.gym)}</div>`}
      <button class="link" id="${isNew&&active().length?'toPick':'close'}">${isNew&&active().length?'‹ 选已有的线':'取消'}</button></div>
