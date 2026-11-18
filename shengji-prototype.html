@@ -179,21 +179,13 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .bookrow .bookopen em{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bookact{flex:none;border:1px solid var(--hair);background:none;border-radius:14px;padding:5px 11px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}
 .bookact:active{opacity:.6}
-/* 新建线：名字左边是颜色滚轮，右边是名字 */
-.namerow{display:flex;gap:10px;align-items:center;margin-top:8px}
-.colname{flex:none;width:24px;font-size:11px;line-height:1.1;color:var(--muted);font-family:var(--mono)}
-.colwheel{flex:none;width:66px;height:46px;position:relative;border:1px solid var(--hair);border-radius:12px;background:var(--paper);overflow:hidden;
-  transition:border-color .18s ease,box-shadow .18s ease}
-.peek{position:absolute;left:13px;right:13px;height:2.5px;border-radius:2px;background:transparent;pointer-events:none;z-index:2;opacity:.5}
-.pk-top{top:3px}.pk-bot{bottom:3px}
-.cw{height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:6px 0;scrollbar-width:none;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20%,#000 80%,transparent 100%);
-  mask-image:linear-gradient(to bottom,transparent 0,#000 20%,#000 80%,transparent 100%)}
-.cw::-webkit-scrollbar{display:none}
-.colchip{height:34px;display:flex;align-items:center;justify-content:center;width:100%;border:none;background:none;cursor:pointer;
-  scroll-snap-align:center;opacity:calc(.16 + .84*var(--k,0));transform:scale(calc(.84 + .16*var(--k,0)))}
-.colchip .tape{width:34px;height:13px;margin:0}
-.nf .namerow .field{margin-top:0;flex:1;height:46px}
+/* 新建线：线路颜色一排胶带，点一下选，不用滑 */
+.colorbar{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;margin-top:6px}
+.colorchip{height:34px;border:1px solid transparent;border-radius:8px;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.colorchip .tape{width:24px;height:10px;margin:0}
+.colorchip.on{border-color:var(--ink);background:var(--card)}
+.colorchip:active{opacity:.55}
+.curname{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px}
 /* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
 .stripLayer{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:26px;
   background:rgba(244,240,230,.55);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
@@ -1627,12 +1619,10 @@ function renderSheet(){
      <div class="shapeRow"><button class="preview" id="pv">${previewSvg()}</button>
        ${b?'<div class="lenCol"><div class="sub" style="margin:auto 0">抱石画成地上的一块石头，不用填线长。</div></div>'
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
-     <div class="lbl">名字</div>
-     <div class="namerow">
-       <div class="colwheel" id="colwheel"><i class="peek pk-top" id="pkTop"></i><i class="peek pk-bot" id="pkBot"></i><div class="cw" id="cw">${COLORKEYS.map(k=>`<button class="colchip" data-v="${k}">${tapeSvg(k,true)}</button>`).join('')}</div></div>
-       <div class="colname" id="cwName">${draft.color||'红'}</div>
-       <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}">
-     </div>`
+     <div class="lbl">线路颜色 <span class="curname" id="cwName">${draft.color||'红'}</span></div>
+     <div class="colorbar" id="cw">${COLORKEYS.map(k=>`<button class="colorchip${k===(draft.color||'红')?' on':''}" data-v="${k}" aria-label="${colorWord(k)}胶带" aria-pressed="${k===(draft.color||'红')}">${tapeSvg(k,true)}</button>`).join('')}</div>
+     <div class="lbl" style="margin-top:14px">名字</div>
+     <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}">`
    :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${b?meta(R(draft.rid)):draft.grade+" · "+draft.wall+"m"} · 第 ${climbsOf(draft.rid).length+1} 次</div>
        ${b?'<div class="sub">抱石画成地上的一块石头。</div>':''}</div><button class="preview" id="pv">${previewSvg()}</button></div>`}
    ${isNew||b?'':`<div class="lbl">本次方式</div><div class="tog tri" style="margin-top:8px">${Object.entries(MODE).map(([k,t])=>`<button data-cm="${k}" class="${draft.mode===k?'on':''}">${ico(k,13)}${t}</button>`).join('')}</div>`}
@@ -1644,16 +1634,10 @@ function renderSheet(){
   const cw=$('cw'),rn=$('rname');
   const fullName=()=>{const suf=rn?rn.value.trim():'';return draft.color?colorWord(draft.color)+(suf?' '+suf:''):suf};
   const syncName=()=>{draft.name=fullName()};
-  if(cw){const chips=[...cw.children],H=34;
-    const pick=()=>{const i=Math.max(0,Math.min(chips.length-1,Math.round(cw.scrollTop/H)));
-      chips.forEach((b,j)=>b.style.setProperty('--k',Math.max(0,1-Math.abs(j-i)*0.6).toFixed(2)));
-      draft.color=chips[i].dataset.v;const cname=$('cwName');if(cname)cname.textContent=draft.color||'';
-      const colOf=b=>b?(b.dataset.v?TAPE[b.dataset.v]:'transparent'):'transparent';
-      const pt=$('pkTop'),pb=$('pkBot');if(pt)pt.style.background=colOf(chips[i-1]);if(pb)pb.style.background=colOf(chips[i+1]);
-      syncName()};
-    cw.scrollTop=H*Math.max(0,chips.findIndex(b=>b.dataset.v===(draft.color||'')));pick();
-    cw.onscroll=()=>requestAnimationFrame(pick);
-    cw.onclick=e=>{const b=e.target.closest('.colchip');if(!b)return;const i=chips.indexOf(b);cw.scrollTo({top:i*H,behavior:'smooth'});pick()}}
+  if(cw){const chips=[...cw.children];
+    const pick=b=>{chips.forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))});
+      draft.color=b.dataset.v;const cname=$('cwName');if(cname)cname.textContent=draft.color;syncName()};
+    cw.onclick=e=>{const b=e.target.closest('.colorchip');if(b)pick(b)}}
   if(rn)rn.oninput=syncName;
   if(hi)hi.oninput=e=>{draft.high=e.target.value/100;const ht=$('hiTxt');if(ht)ht.textContent=hiTxt();const pv=$('pv');if(pv)pv.innerHTML=previewSvg()};
   if(gw){fwTo(gw,0,dGrade());gw.onscroll=()=>{const x=fwPaint(gw,0);if(!x)return;draft.type==='b'?draft.gb=x.dataset.v:draft.gl=x.dataset.v;const pv=$('pv');if(pv)pv.innerHTML=previewSvg()}}
