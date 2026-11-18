@@ -1643,7 +1643,7 @@ function renderSheet(){
      <div class="shapeRow"><button class="preview" id="pv">${previewSvg()}</button>
        ${b?'<div class="lenCol"><div class="sub" style="margin:auto 0">抱石画成地上的一块石头，不用填线长。</div></div>'
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
-     <div class="lbl">名字</div>
+     <div class="lbl" id="nameLbl">名字</div>
      <div class="namebox" id="nb"><button class="cpill" id="cpill" aria-label="换线路颜色">${tapeSvg(draft.color||'红',true)}<span>${draft.color||'红'}</span><i>▾</i></button>
        <input class="field" id="rname" placeholder="3 号 / 黑 裂缝" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}"></div>
      <div class="namehint" id="nameHint" aria-live="polite">点色块选，或把颜色写进名字</div>
@@ -1669,7 +1669,7 @@ function renderSheet(){
       draft.color=b.dataset.v;
       if(manual&&rn&&old&&old!==draft.color)rn.value=stripColorMention(rn.value);
       syncName();paintPill();tint()};
-    const open=on=>{cw.hidden=!on;if(nb)nb.hidden=on;const h=$('nameHint');if(h){h.hidden=on;if(on){h.textContent='点色块选，或把颜色写进名字';h.classList.remove('ok')}}}
+    const open=on=>{cw.hidden=!on;if(nb)nb.hidden=on;const lb=$('nameLbl');if(lb)lb.textContent=on?'线路颜色':'名字';const h=$('nameHint');if(h){h.hidden=on;if(on){h.textContent='点色块选，或把颜色写进名字';h.classList.remove('ok')}}}
     if(cp)cp.onclick=e=>{e.stopPropagation();open(true)};
     cw.onclick=e=>{e.stopPropagation();const b=e.target.closest('.colorchip');if(b){pick(b,true);open(false)}};
     // 名字任意位置出现颜色就选它，不要求“色”或开头；名字保持用户输入
