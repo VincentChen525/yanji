@@ -196,7 +196,7 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .cpill:active{opacity:.6}
 .namehint{font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;transition:color .18s}
 .namehint.ok{color:var(--accent)}
-.colorbar.pop{margin-top:8px;padding:5px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
+.colorbar.pop{margin-top:8px;padding:5px;border:0;border-radius:12px;background:var(--card)}
 .colorbar.pop .colorchip{height:34px}
 .colorbar .colorchip .tape{display:block;width:22px;height:9.5px;margin:0;flex:0 0 22px;vertical-align:0}
 /* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
@@ -1669,7 +1669,7 @@ function renderSheet(){
       draft.color=b.dataset.v;
       if(manual&&rn&&old&&old!==draft.color)rn.value=stripColorMention(rn.value);
       syncName();paintPill();tint()};
-    const open=on=>{cw.hidden=!on;if(nb)nb.hidden=on};
+    const open=on=>{cw.hidden=!on;if(nb)nb.hidden=on;const h=$('nameHint');if(h){h.hidden=on;if(on){h.textContent='点色块选，或把颜色写进名字';h.classList.remove('ok')}}}
     if(cp)cp.onclick=e=>{e.stopPropagation();open(true)};
     cw.onclick=e=>{e.stopPropagation();const b=e.target.closest('.colorchip');if(b){pick(b,true);open(false)}};
     // 名字任意位置出现颜色就选它，不要求“色”或开头；名字保持用户输入
