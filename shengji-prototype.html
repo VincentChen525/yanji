@@ -1903,9 +1903,15 @@ function shareSticker(){
   const scrapLine=isAct?'今天也在爬 · '+sWrapDay(TODAY):done?(kind==='m'?'登顶过':'完成过')+' · '+sWrapDay(TODAY):cur>0?'停在这里 · '+sWrapDay(TODAY):(kind==='m'?'山高 ':'高 ')+fmt(target)+' m，从脚下开始';
   return{W:432,H:540,name:V,target,cur:Math.round(cur),left:Math.round(left),n,isAct,status,kind,unit,kindLabel,tapeLabel,stampTop,scrapLine,date:sWrapDay(TODAY),num:SHARE_STICKER_NUM[V]||17,poly:SHARE_STICKER_POLY[V],asp:SHARE_STICKER_ASPECT[V],xform:SHARE_STICKER_XFORM[V]}
 }
+function shareBackdrop(ctx,W,H){
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#F9F3E6');g.addColorStop(1,'#E8DECB');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const r1=ctx.createRadialGradient(60,50,10,60,50,220);r1.addColorStop(0,'rgba(255,255,255,.9)');r1.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=r1;ctx.fillRect(0,0,W,H);
+  const r2=ctx.createRadialGradient(390,120,10,390,120,200);r2.addColorStop(0,'rgba(226,85,43,.10)');r2.addColorStop(1,'rgba(226,85,43,0)');ctx.fillStyle=r2;ctx.fillRect(0,0,W,H);
+  sDots(ctx,0,0,W,H,7,'rgba(255,255,255,.45)');
+}
 /* 1 小票：真实线路小图 + 台阶式级别分布 */
 function drawReceipt(ctx,D){
-  const W=D.W,H=D.H;ctx.fillStyle=SHARE_PAPER;ctx.fillRect(0,0,W,H);sDots(ctx,0,0,W,H,18);
+  const W=D.W,H=D.H;shareBackdrop(ctx,W,H);
   const x=26,y=20,w=308,h=720;
   ctx.save();ctx.shadowColor='rgba(31,29,25,.18)';ctx.shadowBlur=20;ctx.shadowOffsetY=8;sPaper(ctx,x,y,w,h,9);ctx.fillStyle='#FFFDF7';ctx.fill();ctx.restore();
   sBrandCenter(ctx,W/2,y+30,24,SHARE_INK,SHARE_ACC,'#FFFDF7');
@@ -1962,7 +1968,7 @@ function drawReceipt(ctx,D){
 }
 /* 2 胶带条 */
 function drawTape(ctx,D){
-  const W=D.W,H=D.H;ctx.fillStyle=SHARE_PAPER;ctx.fillRect(0,0,W,H);sDots(ctx,0,0,W,H,18);
+  const W=D.W,H=D.H;shareBackdrop(ctx,W,H);
   ctx.save();ctx.translate(108,36);ctx.rotate(2*Math.PI/180);
   const w=144,h=566;
   ctx.save();ctx.shadowColor='rgba(31,29,25,.20)';ctx.shadowBlur=20;ctx.shadowOffsetY=10;sPaper(ctx,0,0,w,h,8);ctx.fillStyle='#FFFDF7';ctx.fill();ctx.restore();
