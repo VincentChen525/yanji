@@ -194,6 +194,8 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .cpill .tape.big{width:20px;height:9px;margin:0;vertical-align:0}
 .namebox[hidden],.colorbar[hidden]{display:none!important}.cpill i{font-style:normal;font-size:9px;color:var(--muted);margin-left:1px}
 .cpill:active{opacity:.6}
+.namehint{font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;transition:color .18s}
+.namehint.ok{color:var(--accent)}
 .colorbar.pop{margin-top:8px;padding:5px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
 .colorbar.pop .colorchip{height:34px}
 .colorbar .colorchip .tape{display:block;width:22px;height:9.5px;margin:0;flex:0 0 22px;vertical-align:0}
@@ -1643,7 +1645,8 @@ function renderSheet(){
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
      <div class="lbl">名字</div>
      <div class="namebox" id="nb"><button class="cpill" id="cpill" aria-label="换线路颜色">${tapeSvg(draft.color||'红',true)}<span>${draft.color||'红'}</span><i>▾</i></button>
-       <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}"></div>
+       <input class="field" id="rname" placeholder="3 号 / 黑 裂缝" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}"></div>
+     <div class="namehint" id="nameHint" aria-live="polite">点色块选，或把颜色写进名字</div>
      <div class="colorbar pop" id="cw" hidden>${COLORKEYS.map(k=>`<button class="colorchip${k===(draft.color||'红')?' on':''}" data-v="${k}" aria-label="${colorWord(k)}胶带" aria-pressed="${k===(draft.color||'红')}">${tapeSvg(k,true)}</button>`).join('')}</div>`
    :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${b?meta(R(draft.rid)):draft.grade+" · "+draft.wall+"m"} · 第 ${climbsOf(draft.rid).length+1} 次</div>
        ${b?'<div class="sub">抱石画成地上的一块石头。</div>':''}</div><button class="preview" id="pv">${previewSvg()}</button></div>`}
@@ -1670,7 +1673,14 @@ function renderSheet(){
     if(cp)cp.onclick=e=>{e.stopPropagation();open(true)};
     cw.onclick=e=>{e.stopPropagation();const b=e.target.closest('.colorchip');if(b){pick(b,true);open(false)}};
     // 名字任意位置出现颜色就选它，不要求“色”或开头；名字保持用户输入
-    if(rn)rn.oninput=()=>{const k=colorOf(rn.value);if(k){const b=chips.find(x=>x.dataset.v===k);if(b&&b.dataset.v!==draft.color)pick(b,false)}syncName()}
+    let lastHint=null,hintTimer=null;
+    const showHint=k=>{const h=$('nameHint');if(!h)return;
+      h.textContent='识别到「'+k+'」';h.classList.add('ok');clearTimeout(hintTimer);
+      hintTimer=setTimeout(()=>{h.textContent='点色块选，或把颜色写进名字';h.classList.remove('ok');lastHint=null},1600)};
+    if(rn)rn.oninput=()=>{const k=colorOf(rn.value);if(k){
+        const b=chips.find(x=>x.dataset.v===k);if(b&&b.dataset.v!==draft.color)pick(b,false);
+        if(k!==lastHint){lastHint=k;showHint(k)}
+      }else lastHint=null;syncName()}
   }
   else if(rn)rn.oninput=syncName;
   if(hi)hi.oninput=e=>{draft.high=e.target.value/100;const ht=$('hiTxt');if(ht)ht.textContent=hiTxt();const pv=$('pv');if(pv)pv.innerHTML=previewSvg()};
