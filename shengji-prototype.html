@@ -186,6 +186,17 @@ button.stamp{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 .colorchip.on{border-color:var(--ink);background:var(--card)}
 .colorchip:active{opacity:.55}
 .curname{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px}
+/* 名字一行：左边是颜色胶囊（点开换颜色），右边写编号或外号 */
+.namebox{display:flex;align-items:center;gap:8px;height:46px;margin-top:8px;border:1px solid var(--hair);border-radius:12px;background:var(--paper);padding:0 6px}
+.namebox:focus-within{border-color:var(--ink)}
+.namebox .field{flex:1;min-width:0;margin:0!important;height:44px;border:none;background:none;padding:0 8px 0 2px}
+.cpill{flex:none;display:flex;align-items:center;gap:6px;height:32px;border:1px solid var(--hair);border-radius:16px;background:var(--card);padding:0 9px 0 8px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.cpill .tape.big{width:20px;height:9px;margin:0;vertical-align:0}
+.namebox[hidden],.colorbar[hidden]{display:none!important}.cpill i{font-style:normal;font-size:9px;color:var(--muted);margin-left:1px}
+.cpill:active{opacity:.6}
+.colorbar.pop{margin-top:8px;padding:5px;border:1px solid var(--ink);border-radius:12px;background:var(--card)}
+.colorbar.pop .colorchip{height:34px}
+.colorbar .colorchip .tape{display:block;width:22px;height:9.5px;margin:0;flex:0 0 22px;vertical-align:0}
 /* 拆线：全屏居中层 + 背景模糊，动画期间页面不换 */
 .stripLayer{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:26px;
   background:rgba(244,240,230,.55);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
@@ -277,7 +288,8 @@ nav button.new::before{content:"";position:absolute;top:3px;right:calc(50% - 22p
 .lw .rope{position:absolute;left:calc(50% - 69px);top:0;width:10px;border-radius:5px;pointer-events:none;background:
   linear-gradient(90deg,rgba(31,29,25,.26),transparent 32%,rgba(255,255,255,.3) 50%,transparent 68%,rgba(31,29,25,.26)),
   repeating-linear-gradient(58deg,transparent 0 3.2px,rgba(31,29,25,.34) 3.2px 4.4px),
-  repeating-linear-gradient(-58deg,transparent 0 3.2px,rgba(251,248,241,.4) 3.2px 4.4px),var(--accent)}
+  repeating-linear-gradient(-58deg,transparent 0 3.2px,rgba(251,248,241,.4) 3.2px 4.4px),var(--rope,var(--accent));transition:background-color .2s}
+.lw.rw .rope{box-shadow:inset 0 0 0 1px var(--hair)}
 .lw button::before{content:'';position:absolute;left:calc(50% - 56px);top:50%;width:5px;height:1px;background:var(--muted)}
 .lw button[data-five]::after{content:'';position:absolute;left:calc(50% - 70px);top:calc(50% - 3px);width:12px;height:6px;border-radius:1.5px;background:var(--ink)}
 .lwbox span{position:absolute;left:calc(50% + 30px);top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
@@ -528,7 +540,17 @@ const TAPE_EN={红:'RED',橙:'ORANGE',黄:'YELLOW',绿:'GREEN',蓝:'BLUE',紫:'P
 const TAPE={红:'#B9503F',橙:'#D27D3E',黄:'#D8B13F',绿:'#5F8A5B',蓝:'#4F6F9E',紫:'#7A5E9C',粉:'#D7909F',黑:'#2A2824',白:'#FFFFFF',灰:'#A39E92'};
 const COLORKEYS=Object.keys(TAPE);
 const colorWord=k=>k?k+'色':'';
-const colorOf=n=>{const t=String(n||'');return COLORKEYS.find(k=>t.includes(k+'色'))||COLORKEYS.find(k=>t.startsWith(k))||null};
+const colorOf=n=>{const t=String(n||'').trim();if(!t)return null;
+  return COLORKEYS.find(k=>t.includes(k+'色'))||COLORKEYS.find(k=>t.includes(k))||null};
+// 名字里写了颜色时，去掉那一段颜色词，剩下真正的名字
+function stripColorMention(name){
+  return String(name||'').trim().split(/\s+/).map(part=>{
+    const k=colorOf(part);if(!k)return part;
+    if(part===k+'色'||part===k)return '';
+    if(part.endsWith(k))return '';
+    return part.replace(k+'色','').replace(k,'');
+  }).filter(Boolean).join(' ').trim();
+}
 const tapeSvg=(k,big)=>k?`<svg class="tape${big?' big':''}" viewBox="0 0 16 7"><path d="M2.2 .5H15.5L13.8 6.5H.5Z" fill="${TAPE[k]}" stroke="rgba(31,29,25,.25)" stroke-width=".6" stroke-linejoin="round"/></svg>`:'';
 const tape=(x,big)=>{const n=typeof x==='string'?x:(x&&x.name)||'';return tapeSvg((x&&x.color)||colorOf(n),big)};
 const nameSuffix=(name,k)=>{const w=colorWord(k),n=String(name||'');return n.startsWith(w)?n.slice(w.length).trim():''};
@@ -1619,10 +1641,10 @@ function renderSheet(){
      <div class="shapeRow"><button class="preview" id="pv">${previewSvg()}</button>
        ${b?'<div class="lenCol"><div class="sub" style="margin:auto 0">抱石画成地上的一块石头，不用填线长。</div></div>'
           :`<div class="lenCol"><div class="lbl">线长</div><div class="lwbox"><div class="lw" id="lw"><i class="rope" style="height:${36*44+88}px"></i>${Array.from({length:36},(_,i)=>`<button data-v="${i+5}"${(i+5)%5?'':' data-five'}><b>${i+5}</b></button>`).join('')}</div><span>米</span></div></div>`}</div>
-     <div class="lbl">线路颜色 <span class="curname" id="cwName">${draft.color||'红'}</span></div>
-     <div class="colorbar" id="cw">${COLORKEYS.map(k=>`<button class="colorchip${k===(draft.color||'红')?' on':''}" data-v="${k}" aria-label="${colorWord(k)}胶带" aria-pressed="${k===(draft.color||'红')}">${tapeSvg(k,true)}</button>`).join('')}</div>
-     <div class="lbl" style="margin-top:14px">名字</div>
-     <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}">`
+     <div class="lbl">名字</div>
+     <div class="namebox" id="nb"><button class="cpill" id="cpill" aria-label="换线路颜色">${tapeSvg(draft.color||'红',true)}<span>${draft.color||'红'}</span><i>▾</i></button>
+       <input class="field" id="rname" placeholder="3 号 / 裂缝（可不填）" maxlength="16" value="${esc(nameSuffix(draft.name,draft.color||colorOf(draft.name)))}"></div>
+     <div class="colorbar pop" id="cw" hidden>${COLORKEYS.map(k=>`<button class="colorchip${k===(draft.color||'红')?' on':''}" data-v="${k}" aria-label="${colorWord(k)}胶带" aria-pressed="${k===(draft.color||'红')}">${tapeSvg(k,true)}</button>`).join('')}</div>`
    :`<div class="pick"><div class="left"><h1 style="font-size:22px;margin-top:2px">${tape(draft,true)}${esc(draft.name)}</h1><div class="sub" style="margin-bottom:10px">${b?meta(R(draft.rid)):draft.grade+" · "+draft.wall+"m"} · 第 ${climbsOf(draft.rid).length+1} 次</div>
        ${b?'<div class="sub">抱石画成地上的一块石头。</div>':''}</div><button class="preview" id="pv">${previewSvg()}</button></div>`}
    ${isNew||b?'':`<div class="lbl">本次方式</div><div class="tog tri" style="margin-top:8px">${Object.entries(MODE).map(([k,t])=>`<button data-cm="${k}" class="${draft.mode===k?'on':''}">${ico(k,13)}${t}</button>`).join('')}</div>`}
@@ -1631,14 +1653,26 @@ function renderSheet(){
    <div class="extra">${extra}</div>
    <button class="save clip" id="save">${isNew?'记下这条线':'记下这一次'}${BINER}</button></div>`;
   const gw=$('gw'),lw=$('lw'),hi=$('high');
-  const cw=$('cw'),rn=$('rname');
-  const fullName=()=>{const suf=rn?rn.value.trim():'';return draft.color?colorWord(draft.color)+(suf?' '+suf:''):suf};
+  const cw=$('cw'),rn=$('rname'),nb=$('nb'),cp=$('cpill');
+  // 线长那根绳子染成线路的颜色
+  const tint=()=>{if(!lw)return;const k=draft.color||'红';lw.style.setProperty('--rope',TAPE[k]);lw.classList.toggle('rw',k==='白')};tint();
+  const fullName=()=>{const suf=rn?rn.value.trim():'';const has=colorOf(suf);return has?suf:(draft.color?colorWord(draft.color)+(suf?' '+suf:''):suf)};
   const syncName=()=>{draft.name=fullName()};
   if(cw){const chips=[...cw.children];
-    const pick=b=>{chips.forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))});
-      draft.color=b.dataset.v;const cname=$('cwName');if(cname)cname.textContent=draft.color;syncName()};
-    cw.onclick=e=>{const b=e.target.closest('.colorchip');if(b)pick(b)}}
-  if(rn)rn.oninput=syncName;
+    const paintPill=()=>{if(cp)cp.innerHTML=`${tapeSvg(draft.color,true)}<span>${draft.color}</span><i>▾</i>`};
+    const pick=(b,manual)=>{
+      const old=rn?colorOf(rn.value):null;
+      chips.forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))});
+      draft.color=b.dataset.v;
+      if(manual&&rn&&old&&old!==draft.color)rn.value=stripColorMention(rn.value);
+      syncName();paintPill();tint()};
+    const open=on=>{cw.hidden=!on;if(nb)nb.hidden=on};
+    if(cp)cp.onclick=e=>{e.stopPropagation();open(true)};
+    cw.onclick=e=>{e.stopPropagation();const b=e.target.closest('.colorchip');if(b){pick(b,true);open(false)}};
+    // 名字任意位置出现颜色就选它，不要求“色”或开头；名字保持用户输入
+    if(rn)rn.oninput=()=>{const k=colorOf(rn.value);if(k){const b=chips.find(x=>x.dataset.v===k);if(b&&b.dataset.v!==draft.color)pick(b,false)}syncName()}
+  }
+  else if(rn)rn.oninput=syncName;
   if(hi)hi.oninput=e=>{draft.high=e.target.value/100;const ht=$('hiTxt');if(ht)ht.textContent=hiTxt();const pv=$('pv');if(pv)pv.innerHTML=previewSvg()};
   if(gw){fwTo(gw,0,dGrade());gw.onscroll=()=>{const x=fwPaint(gw,0);if(!x)return;draft.type==='b'?draft.gb=x.dataset.v:draft.gl=x.dataset.v;const pv=$('pv');if(pv)pv.innerHTML=previewSvg()}}
   if(lw){fwTo(lw,1,draft.wall);lw.onscroll=()=>{const x=fwPaint(lw,1);if(!x||+x.dataset.v===draft.wall)return;draft.wall=+x.dataset.v;
